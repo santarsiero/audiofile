@@ -2,27 +2,44 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import User from "./models/User.js";
+import Library from "./models/Library.js";
+import Song from "./models/Song.js";
+import Label from "./models/Label.js";
+import SongLabel from "./models/SongLabel.js";
+import SuperLabelComponent from "./models/SuperLabelComponent.js";
+import SongSource from "./models/SongSource.js";
+import LabelMode from "./models/LabelMode.js";
+import LabelModeLabel from "./models/LabelModeLabel.js";
+import librariesRouter from "./routes/libraries.js";
 
 dotenv.config();
-
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/libraries", librariesRouter);
+console.log(
+  "Mounted /api/libraries routes:",
+  (librariesRouter?.stack || [])
+    .filter((l) => l.route)
+    .map((l) => ({ path: l.route.path, methods: l.route.methods }))
+);
 
 app.get("/health", (req, res) => {
   res.json({ ok: true, service: "audiofile-backend" });
 });
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
-if (!MONGO_URI) {
-  console.error("Missing MONGO_URI in .env");
+if (!MONGODB_URI) {
+  console.error("Missing MONGODB_URI in .env");
   process.exit(1);
 }
 
 mongoose
-  .connect(MONGO_URI)
+  .connect(MONGODB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
     app.listen(PORT, () => {
@@ -33,4 +50,3 @@ mongoose
     console.error("Mongo connection error:", err);
     process.exit(1);
   });
-
