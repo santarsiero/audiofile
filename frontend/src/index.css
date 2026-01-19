@@ -1,68 +1,109 @@
+/**
+ * AudioFile Global Styles
+ * 
+ * Tailwind CSS directives and global styles.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* CSS variables for theming (can be extended) */
+  --canvas-bg-light: #f5f5f5;
+  --canvas-bg-dark: #1a1a1a;
+  --panel-bg-light: #ffffff;
+  --panel-bg-dark: #242424;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+html {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  @apply bg-canvas-light dark:bg-canvas-dark;
+  @apply text-gray-900 dark:text-gray-100;
+  @apply antialiased;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* ============================================================================
+   SCROLLBAR STYLES (minimal)
+   ============================================================================ */
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-600;
+}
+
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
+
+/* Canvas-specific utilities */
+.canvas-container {
+  @apply overflow-hidden relative;
+  cursor: grab;
+}
+
+.canvas-container:active {
+  cursor: grabbing;
+}
+
+/* Panel utilities */
+.panel {
+  @apply bg-panel-light dark:bg-panel-dark;
+  @apply border-r border-gray-200 dark:border-gray-800;
+}
+
+/* Song card utilities */
+.song-card {
+  @apply bg-white dark:bg-gray-800;
+  @apply rounded-lg shadow-sm;
+  @apply transition-shadow duration-150;
+}
+
+.song-card:hover {
+  @apply shadow-md;
+}
+
+.song-card.selected {
+  @apply ring-2 ring-blue-500;
+}
+
+/* Label pill utilities */
+.label-pill {
+  @apply inline-flex items-center;
+  @apply px-2 py-0.5 rounded-full;
+  @apply text-xs font-medium;
+  @apply bg-gray-100 dark:bg-gray-700;
+  @apply text-gray-700 dark:text-gray-300;
+}
+
+.label-pill.super {
+  @apply bg-purple-100 dark:bg-purple-900;
+  @apply text-purple-700 dark:text-purple-300;
+}
+
+/* Focus utilities (accessibility) */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  @apply dark:focus:ring-offset-gray-900;
 }
