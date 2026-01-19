@@ -17,8 +17,6 @@ import type {
   CanvasPosition,
   CanvasViewport,
   SongCanvasItem,
-  LabelCanvasItem,
-  SuperLabelCanvasItem,
 } from '@/types/canvas';
 import type { SongId, LabelId } from '@/types/entities';
 import {

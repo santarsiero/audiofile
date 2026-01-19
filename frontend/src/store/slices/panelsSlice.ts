@@ -47,7 +47,7 @@ export const createPanelsSlice: StateCreator<
   ...DEFAULT_PANELS_STATE,
   
   openPanel: (panelId, contentType, entityId = null) => {
-    set((state) => ({
+    set(() => ({
       [panelId]: {
         isOpen: true,
         contentType,
@@ -57,7 +57,7 @@ export const createPanelsSlice: StateCreator<
   },
   
   closePanel: (panelId) => {
-    set((state) => ({
+    set(() => ({
       [panelId]: {
         isOpen: false,
         contentType: null,

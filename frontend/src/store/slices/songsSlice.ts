@@ -9,7 +9,7 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { Song, SongId, LabelId } from '@/types/entities';
+import type { Song, SongId } from '@/types/entities';
 
 // =============================================================================
 // TYPES

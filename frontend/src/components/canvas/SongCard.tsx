@@ -16,7 +16,6 @@
 import { useCallback, type MouseEvent } from 'react';
 import { useStore } from '@/store';
 import type { HydratedSongCanvasItem } from '@/types/canvas';
-import type { Song } from '@/types/entities';
 
 interface SongCardProps {
   item: HydratedSongCanvasItem;
@@ -25,7 +24,6 @@ interface SongCardProps {
 export function SongCard({ item }: SongCardProps) {
   const clickBehavior = useStore((state) => state.clickBehavior);
   const openPanel = useStore((state) => state.openPanel);
-  const selectInstance = useStore((state) => state.selectInstance);
   const toggleInstanceSelection = useStore((state) => state.toggleInstanceSelection);
   const bringInstanceToFront = useStore((state) => state.bringInstanceToFront);
   

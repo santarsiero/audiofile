@@ -15,7 +15,6 @@ import type {
   LabelId, 
   SongId, 
   SongLabel,
-  RegularLabel,
 } from '@/types/entities';
 
 // =============================================================================

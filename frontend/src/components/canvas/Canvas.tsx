@@ -16,7 +16,7 @@
 
 import { useRef, useCallback, useState, type MouseEvent } from 'react';
 import { useStore } from '@/store';
-import type { CanvasItem, HydratedCanvasItem } from '@/types/canvas';
+import type { HydratedCanvasItem } from '@/types/canvas';
 import { SongCard } from './SongCard';
 
 export function Canvas() {
@@ -32,7 +32,6 @@ export function Canvas() {
   
   // Entity data for hydration
   const songsById = useStore((state) => state.songsById);
-  const labelsById = useStore((state) => state.labelsById);
   
   // Local pan state
   const [isPanning, setIsPanning] = useState(false);

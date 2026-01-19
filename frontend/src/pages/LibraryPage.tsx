@@ -20,7 +20,6 @@ import { FloatingControls } from '@/components/canvas/FloatingControls';
 const DEFAULT_LIBRARY_ID = 'default-library';
 
 export function LibraryPage() {
-  const isBootstrapped = useStore((state) => state.isBootstrapped);
   const isBootstrapping = useStore((state) => state.isBootstrapping);
   const bootstrapError = useStore((state) => state.bootstrapError);
   const setActiveLibrary = useStore((state) => state.setActiveLibrary);

@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { useStore } from '@/store';
 
 export function FloatingControls() {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, _setIsVisible] = useState(true);
   
   const viewport = useStore((state) => state.viewport);
   const zoomIn = useStore((state) => state.zoomIn);

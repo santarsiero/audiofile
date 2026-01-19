@@ -15,7 +15,6 @@ import type {
   Library,
   SongId,
   LabelId,
-  LibraryId,
   SongLabel,
 } from './entities';
 

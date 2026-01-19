@@ -10,7 +10,7 @@
  * - Must tolerate additive backend changes
  */
 
-import type { ApiResponse, ApiError } from '@/types/api';
+import type { ApiError } from '@/types/api';
 
 // =============================================================================
 // CONFIGURATION

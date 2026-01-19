@@ -76,7 +76,7 @@ function getSortKey(
       return label.name.toLowerCase();
     }
     default:
-      return item.entityId;
+      return (item as CanvasItem).entityId;
   }
 }
 
