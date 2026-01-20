@@ -19,7 +19,7 @@ export async function bootstrapLibrary(
   libraryId: LibraryId
 ): Promise<LibraryBootstrapResponse> {
   return apiClient.get<LibraryBootstrapResponse>(
-    `/libraries/${libraryId}/bootstrap`
+    `libraries/${libraryId}/bootstrap`
   );
 }
 

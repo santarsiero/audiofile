@@ -1,7 +1,7 @@
 /**
  * AudioFile Library Page
  * 
- * Main workspace page (Workshop 1-5).
+ * Main workspace page (Workshop 1–5).
  * Contains the infinite canvas and floating controls.
  * 
  * This page:
@@ -14,22 +14,71 @@ import { useEffect } from 'react';
 import { useStore } from '@/store';
 import { Canvas } from '@/components/canvas/Canvas';
 import { FloatingControls } from '@/components/canvas/FloatingControls';
+import * as libraryApi from '@/services/libraryApi';
 
 // Temporary: hardcoded library ID for MVP
 // In production, this would come from auth/session
-const DEFAULT_LIBRARY_ID = 'default-library';
+const DEFAULT_LIBRARY_ID = 'lib_default';
 
 export function LibraryPage() {
-  const isBootstrapping = useStore((state) => state.isBootstrapping);
-  const bootstrapError = useStore((state) => state.bootstrapError);
-  const setActiveLibrary = useStore((state) => state.setActiveLibrary);
-  
+  const {
+    isBootstrapping,
+    bootstrapError,
+    setActiveLibrary,
+    setLibraryData,
+    setBootstrapping,
+    setBootstrapped,
+    setBootstrapError,
+    setSongs,
+    setLabels,
+    setSongLabels,
+    setModes,
+  } = useStore((state) => ({
+    isBootstrapping: state.isBootstrapping,
+    bootstrapError: state.bootstrapError,
+    setActiveLibrary: state.setActiveLibrary,
+    setLibraryData: state.setLibraryData,
+    setBootstrapping: state.setBootstrapping,
+    setBootstrapped: state.setBootstrapped,
+    setBootstrapError: state.setBootstrapError,
+    setSongs: state.setSongs,
+    setLabels: state.setLabels,
+    setSongLabels: state.setSongLabels,
+    setModes: state.setModes,
+  }));
+
   // Bootstrap library on mount
   useEffect(() => {
     setActiveLibrary(DEFAULT_LIBRARY_ID);
-    // TODO: Call bootstrap API once backend is connected
-    // For now, we'll simulate bootstrapped state
-  }, [setActiveLibrary]);
+    setBootstrapping(true);
+    setBootstrapError(null);
+
+    libraryApi
+      .bootstrapLibrary(DEFAULT_LIBRARY_ID)
+      .then((data) => {
+        setLibraryData(data.library);
+        setSongs(data.songs);
+        setLabels(data.labels, data.superLabels);
+        setSongLabels(data.songLabels);
+        setModes(data.labelModes);
+        setBootstrapped(true);
+      })
+      .catch((error) => {
+        const message =
+          error instanceof Error ? error.message : 'Failed to load library.';
+        setBootstrapError(message);
+      });
+  }, [
+    setActiveLibrary,
+    setBootstrapping,
+    setBootstrapError,
+    setBootstrapped,
+    setLibraryData,
+    setSongs,
+    setLabels,
+    setSongLabels,
+    setModes,
+  ]);
 
   // Loading state
   if (isBootstrapping) {
@@ -49,8 +98,18 @@ export function LibraryPage() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="text-red-500 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-12 h-12 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -74,7 +133,7 @@ export function LibraryPage() {
     <div className="h-full relative">
       {/* Main canvas */}
       <Canvas />
-      
+
       {/* Floating controls (zoom, recenter, undo) */}
       <FloatingControls />
     </div>
