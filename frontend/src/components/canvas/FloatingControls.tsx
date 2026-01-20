@@ -13,6 +13,7 @@
 
 import { useState } from 'react';
 import { useStore } from '@/store';
+import { runCanvasLayoutPipeline } from '@/orchestrators/runCanvasLayoutPipeline';
 
 export function FloatingControls() {
   const [isVisible, _setIsVisible] = useState(true);
@@ -28,7 +29,7 @@ export function FloatingControls() {
   const handleRecenter = () => {
     resetPan();
     resetZoom();
-    // TODO: Trigger layout engine to recompute grid positions
+    runCanvasLayoutPipeline();
   };
 
   // Undo placeholder

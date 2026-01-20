@@ -9,10 +9,12 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { initializeTheme } from '@/store';
+import { initializeCanvasLayoutPipelineTriggers } from '@/orchestrators/runCanvasLayoutPipeline';
 import './index.css';
 
 // Initialize theme before render (prevents flash)
 initializeTheme();
+initializeCanvasLayoutPipelineTriggers();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
