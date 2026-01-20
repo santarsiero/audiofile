@@ -56,11 +56,13 @@ export function LibraryPage() {
     libraryApi
       .bootstrapLibrary(DEFAULT_LIBRARY_ID)
       .then((data) => {
+        setBootstrapError(null);
         setLibraryData(data.library);
-        setSongs(data.songs);
-        setLabels(data.labels, data.superLabels);
-        setSongLabels(data.songLabels);
-        setModes(data.labelModes);
+        setSongs(data.songs ?? []);
+        setLabels(data.labels ?? [], data.superLabels ?? []);
+        setSongLabels(data.songLabels ?? []);
+        setModes(data.labelModes ?? []);
+        setBootstrapping(false);
         setBootstrapped(true);
       })
       .catch((error) => {

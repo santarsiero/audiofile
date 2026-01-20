@@ -20,7 +20,10 @@ import type { ApiError } from '@/types/api';
  * Base URL for API calls
  * Uses environment variable or falls back to default
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050/api';
+const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050/api';
+const API_BASE_URL = rawApiBaseUrl.endsWith('/')
+  ? rawApiBaseUrl
+  : `${rawApiBaseUrl}/`;
 
 /**
  * Default request timeout (ms)
@@ -246,7 +249,7 @@ export const apiClient = {
  */
 export async function checkApiHealth(): Promise<boolean> {
   try {
-    await apiClient.get('/health');
+    await apiClient.get('health');
     return true;
   } catch {
     return false;

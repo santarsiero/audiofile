@@ -23,7 +23,7 @@ import type { Song, SongId } from '@/types/entities';
  * Returns unordered list - frontend handles ordering
  */
 export async function fetchSongs(): Promise<Song[]> {
-  const response = await apiClient.get<GetSongsResponse>('/songs');
+  const response = await apiClient.get<GetSongsResponse>('songs');
   return response.songs;
 }
 
@@ -31,14 +31,14 @@ export async function fetchSongs(): Promise<Song[]> {
  * Fetch a single song by ID
  */
 export async function fetchSongById(songId: SongId): Promise<Song> {
-  return apiClient.get<Song>(`/songs/${songId}`);
+  return apiClient.get<Song>(`songs/${songId}`);
 }
 
 /**
  * Create a new song
  */
 export async function createSong(data: CreateSongRequest): Promise<Song> {
-  const response = await apiClient.post<CreateSongResponse>('/songs', data);
+  const response = await apiClient.post<CreateSongResponse>('songs', data);
   return response.song;
 }
 
@@ -50,7 +50,7 @@ export async function updateSong(
   data: UpdateSongRequest
 ): Promise<Song> {
   const response = await apiClient.put<UpdateSongResponse>(
-    `/songs/${songId}`,
+    `songs/${songId}`,
     data
   );
   return response.song;
@@ -61,7 +61,7 @@ export async function updateSong(
  */
 export async function deleteSong(songId: SongId): Promise<SongId> {
   const response = await apiClient.delete<DeleteSongResponse>(
-    `/songs/${songId}`
+    `songs/${songId}`
   );
   return response.deletedSongId;
 }

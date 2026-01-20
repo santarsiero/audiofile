@@ -29,7 +29,7 @@ export async function filterSongsByLabels(
   };
   
   const response = await apiClient.post<FilterSongsResponse>(
-    '/songs/filter',
+    'songs/filter',
     request
   );
   

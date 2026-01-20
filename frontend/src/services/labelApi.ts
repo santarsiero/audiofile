@@ -30,7 +30,7 @@ export async function fetchLabels(): Promise<{
   labels: Label[];
   superLabels: SuperLabel[];
 }> {
-  const response = await apiClient.get<GetLabelsResponse>('/labels');
+  const response = await apiClient.get<GetLabelsResponse>('labels');
   return {
     labels: response.labels,
     superLabels: response.superLabels,
@@ -41,14 +41,14 @@ export async function fetchLabels(): Promise<{
  * Fetch a single label by ID
  */
 export async function fetchLabelById(labelId: LabelId): Promise<Label> {
-  return apiClient.get<Label>(`/labels/${labelId}`);
+  return apiClient.get<Label>(`labels/${labelId}`);
 }
 
 /**
  * Create a new regular label
  */
 export async function createLabel(data: CreateLabelRequest): Promise<Label> {
-  const response = await apiClient.post<CreateLabelResponse>('/labels', data);
+  const response = await apiClient.post<CreateLabelResponse>('labels', data);
   return response.label;
 }
 
@@ -59,7 +59,7 @@ export async function createSuperLabel(
   data: CreateSuperLabelRequest
 ): Promise<SuperLabel> {
   const response = await apiClient.post<CreateSuperLabelResponse>(
-    '/labels/super',
+    'labels/super',
     data
   );
   return response.superLabel;
@@ -70,7 +70,7 @@ export async function createSuperLabel(
  */
 export async function deleteLabel(labelId: LabelId): Promise<LabelId> {
   const response = await apiClient.delete<DeleteLabelResponse>(
-    `/labels/${labelId}`
+    `labels/${labelId}`
   );
   return response.deletedLabelId;
 }
@@ -87,7 +87,7 @@ export async function addLabelToSong(
   labelId: LabelId
 ): Promise<SongLabel> {
   const response = await apiClient.post<AddLabelToSongResponse>(
-    `/songs/${songId}/labels`,
+    `songs/${songId}/labels`,
     { labelId } as AddLabelToSongRequest
   );
   return response.songLabel;
@@ -101,7 +101,7 @@ export async function removeLabelFromSong(
   labelId: LabelId
 ): Promise<{ songId: SongId; labelId: LabelId }> {
   const response = await apiClient.delete<RemoveLabelFromSongResponse>(
-    `/songs/${songId}/labels/${labelId}`
+    `songs/${songId}/labels/${labelId}`
   );
   return { songId: response.songId, labelId: response.labelId };
 }
@@ -113,7 +113,7 @@ export async function fetchSongLabels(
   songId: SongId
 ): Promise<{ labels: Label[]; superLabels: SuperLabel[] }> {
   const response = await apiClient.get<GetSongLabelsResponse>(
-    `/songs/${songId}/labels`
+    `songs/${songId}/labels`
   );
   return {
     labels: response.labels,
