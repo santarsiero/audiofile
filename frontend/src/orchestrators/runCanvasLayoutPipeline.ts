@@ -41,24 +41,12 @@ export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): voi
     clearSelection,
   } = store;
 
-  // TODO(TemporaryLogging): remove these diagnostics after verifying pipeline inputs/outputs.
-  const logPrefix = '[CanvasPipeline][TEMP]';
-
   markRebuildStart();
 
   const songIdsToPlace = selectSongIdsForFilters({
     songIds,
     songsByLabelId,
     superLabelsById,
-    activeLabelIds,
-    allSongsActive,
-  });
-
-  console.info(
-    `${logPrefix} input songs: ${songIdsToPlace.length}`,
-    { totalCanonicalSongs: songIds.length }
-  );
-  console.info(`${logPrefix} filters`, {
     activeLabelIds,
     allSongsActive,
   });
@@ -77,8 +65,6 @@ export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): voi
   if (items.some((item) => item.isSelected)) {
     clearSelection();
   }
-
-  console.info(`${logPrefix} output items: ${positionedItems.length}`);
 
   setItems(positionedItems);
 
