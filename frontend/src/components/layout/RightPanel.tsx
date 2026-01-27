@@ -17,9 +17,9 @@ export function RightPanel() {
   const closePanel = useStore((state) => state.closePanel);
 
   return (
-    <aside className="w-80 flex flex-col bg-panel-light dark:bg-panel-dark border-l border-gray-200 dark:border-gray-800">
+    <aside className="w-80 h-full min-h-0 flex flex-col bg-panel-light dark:bg-panel-dark border-l border-gray-200 dark:border-gray-800">
       {/* Panel header */}
-      <div className="h-12 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="h-12 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-panel-light/95 dark:bg-panel-dark/95">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           {getPanelTitle(contentType)}
         </h2>
@@ -34,7 +34,7 @@ export function RightPanel() {
       </div>
 
       {/* Panel content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
         <PanelContent contentType={contentType} />
       </div>
     </aside>

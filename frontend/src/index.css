@@ -20,7 +20,25 @@
   --panel-bg-dark: #242424;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#root {
+  width: 100%;
+  overflow: hidden;
+}
+
 html {
+  overflow: hidden;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
 }
@@ -59,7 +77,7 @@ body {
 
 /* Canvas-specific utilities */
 .canvas-container {
-  @apply overflow-hidden relative;
+  @apply relative;
   cursor: grab;
 }
 
@@ -100,6 +118,10 @@ body {
 .label-pill.super {
   @apply bg-purple-100 dark:bg-purple-900;
   @apply text-purple-700 dark:text-purple-300;
+}
+
+.label-pill.selected {
+  @apply ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200;
 }
 
 /* Focus utilities (accessibility) */

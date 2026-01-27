@@ -10,17 +10,18 @@
  * - Shows floating controls (zoom, recenter, undo)
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from '@/store';
 import { Canvas } from '@/components/canvas/Canvas';
-import { FloatingControls } from '@/components/canvas/FloatingControls';
 import * as libraryApi from '@/services/libraryApi';
+import { runCanvasLayoutPipeline } from '@/orchestrators/runCanvasLayoutPipeline';
 
 // Temporary: hardcoded library ID for MVP
 // In production, this would come from auth/session
 const DEFAULT_LIBRARY_ID = 'lib_default';
 
 export function LibraryPage() {
+  const hasInitializedCanvasRef = useRef(false);
   const {
     isBootstrapping,
     bootstrapError,
@@ -64,6 +65,14 @@ export function LibraryPage() {
         setModes(data.labelModes ?? []);
         setBootstrapping(false);
         setBootstrapped(true);
+
+        if (!hasInitializedCanvasRef.current) {
+          const { createSnapshot, pushUndoEntry } = useStore.getState();
+          const snapshot = createSnapshot();
+          pushUndoEntry({ action: 'rebuild', snapshot });
+          runCanvasLayoutPipeline({ recordUndo: false });
+          hasInitializedCanvasRef.current = true;
+        }
       })
       .catch((error) => {
         const message =
@@ -133,11 +142,8 @@ export function LibraryPage() {
 
   return (
     <div className="h-full relative">
-      {/* Main canvas */}
+      {/* Main canvas (now responsible for floating controls) */}
       <Canvas />
-
-      {/* Floating controls (zoom, recenter, undo) */}
-      <FloatingControls />
     </div>
   );
 }

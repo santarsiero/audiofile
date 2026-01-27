@@ -30,22 +30,30 @@ export function MainLayout({ children }: MainLayoutProps) {
   const rightPanelOpen = useStore((state) => state.right.isOpen);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen max-h-screen flex flex-col overflow-hidden bg-canvas-light dark:bg-canvas-dark">
       {/* Header */}
       <Header />
       
       {/* Main content area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* Left Panel */}
-        {leftPanelOpen && <LeftPanel />}
+        {leftPanelOpen && (
+          <div className="flex-shrink-0 h-full">
+            <LeftPanel />
+          </div>
+        )}
         
         {/* Canvas area (main content) */}
-        <main className="flex-1 overflow-hidden relative bg-canvas-light dark:bg-canvas-dark">
+        <main className="flex-1 min-w-0 min-h-0 overflow-hidden relative">
           {children}
         </main>
         
         {/* Right Panel */}
-        {rightPanelOpen && <RightPanel />}
+        {rightPanelOpen && (
+          <div className="flex-shrink-0 h-full">
+            <RightPanel />
+          </div>
+        )}
       </div>
     </div>
   );

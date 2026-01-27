@@ -21,7 +21,7 @@ export function Header() {
   const toggleRightPanel = useStore((state) => state.togglePanel);
 
   return (
-    <header className="bg-panel-light dark:bg-panel-dark border-b border-gray-200 dark:border-gray-800">
+    <header className="bg-panel-light dark:bg-panel-dark border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
       {/* Main header row */}
       <div className="h-14 flex items-center px-4 gap-4">
         {/* Logo / App name */}
@@ -109,7 +109,7 @@ export function Header() {
       {/* Sub-header row */}
       <div className="h-12 flex items-center px-4 gap-4 border-t border-gray-100 dark:border-gray-800">
         {/* Left side: Song controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => toggleLeftPanel('left')}
             className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
@@ -124,15 +124,17 @@ export function Header() {
         </div>
 
         {/* Center: Active Labels */}
-        <div className="flex-1 flex items-center justify-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+        <div className="flex-1 min-w-0 flex items-center justify-center gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide whitespace-nowrap">
             Active Labels:
           </span>
-          <ActiveLabelsRow />
+          <div className="flex-1 min-w-0">
+            <ActiveLabelsRow />
+          </div>
         </div>
 
         {/* Right side: Label controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => toggleRightPanel('right')}
             className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
@@ -161,22 +163,27 @@ function ActiveLabelsRow() {
   const clearFilters = useStore((state) => state.clearFilters);
   const removeFilter = useStore((state) => state.removeFilter);
 
+  const containerClasses =
+    'flex items-center gap-1.5 flex-nowrap overflow-x-auto overscroll-contain max-w-full min-h-[28px]';
+
   if (allSongsActive || activeLabelIds.length === 0) {
     return (
-      <span className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md">
-        All Songs
-      </span>
+      <div className={containerClasses}>
+        <span className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md whitespace-nowrap">
+          All Songs
+        </span>
+      </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className={containerClasses}>
       {activeLabelIds.map((labelId) => {
         const label = labelsById[labelId];
         return (
           <span
             key={labelId}
-            className="inline-flex items-center gap-1 px-2 py-0.5 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full"
+            className="inline-flex items-center gap-1 px-2 py-0.5 text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full whitespace-nowrap flex-shrink-0"
           >
             {label?.name || labelId}
             <button
@@ -190,11 +197,11 @@ function ActiveLabelsRow() {
           </span>
         );
       })}
-      
+
       {activeLabelIds.length > 0 && (
         <button
           onClick={clearFilters}
-          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-2"
+          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ml-2 flex-shrink-0"
         >
           Clear all
         </button>

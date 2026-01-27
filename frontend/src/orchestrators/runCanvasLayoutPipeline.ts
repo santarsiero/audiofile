@@ -22,7 +22,8 @@ import type { PositionedItem } from '@/layout-engines';
  * - Apply AlphabeticalGridLayoutEngine to the generated canvas items
  * - Update only positions (no new instances) and replace canvas items with layout output
  */
-export function runCanvasLayoutPipeline(): void {
+export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): void {
+  const { recordUndo = true } = options ?? {};
   const store = useStore.getState();
   const {
     songIds,
@@ -33,12 +34,31 @@ export function runCanvasLayoutPipeline(): void {
     activeLabelIds,
     allSongsActive,
     setItems,
+    createSnapshot,
+    pushUndoEntry,
+    items,
+    markRebuildStart,
+    clearSelection,
   } = store;
+
+  // TODO(TemporaryLogging): remove these diagnostics after verifying pipeline inputs/outputs.
+  const logPrefix = '[CanvasPipeline][TEMP]';
+
+  markRebuildStart();
 
   const songIdsToPlace = selectSongIdsForFilters({
     songIds,
     songsByLabelId,
     superLabelsById,
+    activeLabelIds,
+    allSongsActive,
+  });
+
+  console.info(
+    `${logPrefix} input songs: ${songIdsToPlace.length}`,
+    { totalCanonicalSongs: songIds.length }
+  );
+  console.info(`${logPrefix} filters`, {
     activeLabelIds,
     allSongsActive,
   });
@@ -51,7 +71,20 @@ export function runCanvasLayoutPipeline(): void {
   });
 
   const positionedItems = applyLayoutToItems(songInstances, layoutResult.items);
+  const shouldRecordUndo = recordUndo && items.length > 0;
+  const snapshot = shouldRecordUndo ? createSnapshot() : null;
+
+  if (items.some((item) => item.isSelected)) {
+    clearSelection();
+  }
+
+  console.info(`${logPrefix} output items: ${positionedItems.length}`);
+
   setItems(positionedItems);
+
+  if (snapshot) {
+    pushUndoEntry({ action: 'rebuild', snapshot });
+  }
 
 }
 

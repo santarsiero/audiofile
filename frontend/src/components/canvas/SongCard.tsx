@@ -13,8 +13,6 @@
  * - Labels/superlabels are NOT displayed directly on song cards (intentional minimalism)
  */
 
-import { useCallback, type MouseEvent } from 'react';
-import { useStore } from '@/store';
 import type { HydratedSongCanvasItem } from '@/types/canvas';
 
 interface SongCardProps {
@@ -22,41 +20,10 @@ interface SongCardProps {
 }
 
 export function SongCard({ item }: SongCardProps) {
-  const clickBehavior = useStore((state) => state.clickBehavior);
-  const openPanel = useStore((state) => state.openPanel);
-  const toggleInstanceSelection = useStore((state) => state.toggleInstanceSelection);
-  const bringInstanceToFront = useStore((state) => state.bringInstanceToFront);
-  
   const song = item.entity;
-  
-  // Determine display text
+
   const primaryText = song.nickname || song.displayTitle;
   const secondaryText = song.displayArtist;
-  
-  // Handle click based on click behavior setting
-  const handleClick = useCallback((e: MouseEvent) => {
-    e.stopPropagation();
-    
-    if (clickBehavior === 'single-click') {
-      // Single click opens info panel
-      openPanel('right', 'song-info', song.songId);
-    } else {
-      // Double-click mode: single click selects
-      toggleInstanceSelection(item.instanceId);
-    }
-    
-    // Bring to front on any click
-    bringInstanceToFront(item.instanceId);
-  }, [clickBehavior, openPanel, song.songId, toggleInstanceSelection, item.instanceId, bringInstanceToFront]);
-  
-  // Handle double click (only in double-click mode)
-  const handleDoubleClick = useCallback((e: MouseEvent) => {
-    e.stopPropagation();
-    
-    if (clickBehavior === 'double-click') {
-      openPanel('right', 'song-info', song.songId);
-    }
-  }, [clickBehavior, openPanel, song.songId]);
 
   return (
     <div
@@ -64,8 +31,6 @@ export function SongCard({ item }: SongCardProps) {
         song-card w-[180px] h-[220px] p-3 cursor-pointer
         ${item.isSelected ? 'selected' : ''}
       `}
-      onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
     >
       {/* Album artwork */}
       <div className="w-full aspect-square mb-3 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
