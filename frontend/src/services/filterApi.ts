@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from './api';
+import { useStore } from '@/store';
 import type { FilterSongsRequest, FilterSongsResponse } from '@/types/api';
 import type { Song, LabelId } from '@/types/entities';
 import type { FilterMode } from '@/types/state';
@@ -23,13 +24,18 @@ export async function filterSongsByLabels(
   labelIds: LabelId[],
   mode: FilterMode
 ): Promise<Song[]> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+
   const request: FilterSongsRequest = {
     labelIds,
     mode,
   };
   
   const response = await apiClient.post<FilterSongsResponse>(
-    'songs/filter',
+    `libraries/${activeLibraryId}/songs/filter`,
     request
   );
   

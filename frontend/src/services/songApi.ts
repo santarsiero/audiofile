@@ -24,7 +24,13 @@ import type { Song, SongId } from '@/types/entities';
  * Returns unordered list - frontend handles ordering
  */
 export async function fetchSongs(): Promise<Song[]> {
-  const response = await apiClient.get<GetSongsResponse>('songs');
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+  const response = await apiClient.get<GetSongsResponse>(
+    `libraries/${activeLibraryId}/songs`
+  );
   return response.songs;
 }
 
@@ -32,14 +38,28 @@ export async function fetchSongs(): Promise<Song[]> {
  * Fetch a single song by ID
  */
 export async function fetchSongById(songId: SongId): Promise<Song> {
-  return apiClient.get<Song>(`songs/${songId}`);
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+  const response = await apiClient.get<{ song: Song }>(
+    `libraries/${activeLibraryId}/songs/${songId}`
+  );
+  return response.song;
 }
 
 /**
  * Create a new song
  */
 export async function createSong(data: CreateSongRequest): Promise<Song> {
-  const response = await apiClient.post<CreateSongResponse>('songs', data);
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+  const response = await apiClient.post<CreateSongResponse>(
+    `libraries/${activeLibraryId}/songs`,
+    data
+  );
   return response.song;
 }
 
@@ -50,8 +70,13 @@ export async function updateSong(
   songId: SongId,
   data: UpdateSongRequest
 ): Promise<Song> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+
   const response = await apiClient.put<UpdateSongResponse>(
-    `songs/${songId}`,
+    `libraries/${activeLibraryId}/songs/${songId}`,
     data
   );
   return response.song;

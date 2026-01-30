@@ -10,7 +10,10 @@
  * Panel content is determined by state (panelsSlice).
  */
 
+import { useState } from 'react';
 import { useStore } from '@/store';
+import { labelApi } from '@/services/labelApi';
+import type { LabelId, SongId } from '@/types/entities';
 
 export function RightPanel() {
   const contentType = useStore((state) => state.right.contentType);
@@ -63,56 +66,87 @@ function getPanelTitle(contentType: string | null): string {
 function PanelContent({ contentType }: { contentType: string | null }) {
   switch (contentType) {
     case 'label-list':
-      return <LabelListPlaceholder />;
+      return <LabelList />;
     case 'label-info':
-      return <LabelInfoPlaceholder />;
+      return <LabelInfo />;
     case 'superlabel-info':
       return <SuperLabelInfoPlaceholder />;
     case 'song-info':
-      return <SongInfoPlaceholder />;
+      return <SongInfo />;
     case 'add-label':
-      return <AddLabelPlaceholder />;
+      return <AddLabelForm />;
     case 'add-superlabel':
       return <AddSuperLabelPlaceholder />;
     default:
-      return <LabelListPlaceholder />;
+      return <LabelList />;
   }
 }
 
 // Placeholder components - will be replaced with real implementations
 
-function LabelListPlaceholder() {
-  const labelCount = useStore((state) => state.labelIds.length);
-  const superLabelCount = useStore((state) => state.superLabelIds.length);
-  
+function LabelList() {
+  const labelIds = useStore((state) => state.labelIds);
+  const labelsById = useStore((state) => state.labelsById);
+  const openPanel = useStore((state) => state.openPanel);
+
+  const sortedLabels = labelIds
+    .map((id) => labelsById[id])
+    .filter(Boolean)
+    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+
+  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, labelId: LabelId) => {
+    event.dataTransfer.setData('application/x-audiofile-label', labelId);
+    event.dataTransfer.effectAllowed = 'copy';
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="text-center text-gray-500 dark:text-gray-400 py-4">
-        <p className="text-sm">{labelCount} labels</p>
-        <p className="text-sm">{superLabelCount} super labels</p>
-        <p className="text-xs mt-2">Label list component coming soon</p>
-      </div>
-      
-      {/* Show/Hide Superlabels toggle placeholder */}
-      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          Show Super Labels
-        </span>
-        <button className="relative inline-flex h-5 w-9 items-center rounded-full bg-blue-500">
-          <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-4 transition" />
-        </button>
-      </div>
+    <div className="space-y-2">
+      {sortedLabels.map((label) => (
+        <div
+          key={label.labelId}
+          draggable
+          onDragStart={(event) => handleDragStart(event, label.labelId)}
+          onClick={() => openPanel('right', 'label-info', label.labelId)}
+          className="cursor-pointer rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900"
+          title={label.name}
+        >
+          <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+            {label.name}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-function LabelInfoPlaceholder() {
-  const entityId = useStore((state) => state.right.entityId);
-  
+function LabelInfo() {
+  const labelId = useStore((state) => state.right.entityId) as LabelId | null;
+  const label = useStore((state) => (labelId ? state.labelsById[labelId] : undefined));
+
+  if (!labelId || !label) {
+    return (
+      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <p className="text-sm">Label not found</p>
+      </div>
+    );
+  }
+
+  const isManualLabel = label.name === 'Manual';
+
   return (
-    <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-      <p className="text-sm">Label info for: {entityId || 'unknown'}</p>
-      <p className="text-xs mt-2">Coming soon</p>
+    <div className="space-y-3">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={label.name}>
+            {label.name}
+          </p>
+          {isManualLabel && (
+            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full">
+              Manual
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -128,22 +162,94 @@ function SuperLabelInfoPlaceholder() {
   );
 }
 
-function SongInfoPlaceholder() {
-  const entityId = useStore((state) => state.right.entityId);
-  
+function SongInfo() {
+  const songId = useStore((state) => state.right.entityId) as SongId | null;
+  const song = useStore((state) => (songId ? state.songsById[songId] : undefined));
+  const labelsBySongId = useStore((state) => state.labelsBySongId);
+  const labelsById = useStore((state) => state.labelsById);
+
+  if (!songId || !song) {
+    return (
+      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <p className="text-sm">Song not found</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-      <p className="text-sm">Song info for: {entityId || 'unknown'}</p>
-      <p className="text-xs mt-2">Coming soon</p>
+    <div className="space-y-4">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={song.nickname || song.displayTitle}>
+          {song.nickname || song.displayTitle}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={song.displayArtist}>
+          {song.displayArtist}
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          Labels
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {(labelsBySongId[songId] ?? []).map((labelId) => (
+            <span
+              key={labelId}
+              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full"
+            >
+              {labelsById[labelId]?.name ?? labelId}
+            </span>
+          ))}
+          {(labelsBySongId[songId] ?? []).length === 0 && (
+            <span className="text-sm text-gray-500 dark:text-gray-400">No labels</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-function AddLabelPlaceholder() {
+function AddLabelForm() {
+  const addLabel = useStore((state) => state.addLabel);
+  const setPanelContent = useStore((state) => state.setPanelContent);
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!name.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const created = await labelApi.create({ name: name.trim() });
+      addLabel(created);
+      setPanelContent('right', 'label-info', created.labelId);
+      setName('');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-      <p className="text-sm">Add label form coming soon</p>
-    </div>
+    <form onSubmit={(event) => void handleSubmit(event)} className="space-y-3">
+      <div>
+        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          Name
+        </label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={isSubmitting || !name.trim()}
+        className="w-full px-3 py-2 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+      >
+        Create
+      </button>
+    </form>
   );
 }
 

@@ -24,6 +24,7 @@ import {
 } from 'react';
 import { useStore } from '@/store';
 import { labelApi } from '@/services/labelApi';
+import type { SongId, LabelId } from '@/types/entities';
 import type {
   CanvasSnapshot,
   LabelApplicationOperation,
@@ -40,6 +41,9 @@ import { FloatingControls } from './FloatingControls';
 const SHOW_CANVAS_EMPTY_STATE = false;
 const COPY_OFFSET = 24;
 const DELETE_FEEDBACK_MS = 50;
+
+const DND_SONG_MIME = 'application/x-audiofile-song';
+const DND_LABEL_MIME = 'application/x-audiofile-label';
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -224,6 +228,127 @@ export function Canvas() {
   const selectedSongItems = selectedItems.filter(
     (item): item is HydratedSongCanvasItem => item.type === 'song'
   );
+
+  const applyLabelToSongs = useCallback(
+    async (songIds: SongId[], labelId: LabelId, snapshot: CanvasSnapshot) => {
+      const pendingOperations: LabelApplicationOperation[] = [];
+      songIds.forEach((songId) => {
+        const existingLabelIds = labelsBySongId[songId] ?? [];
+        if (existingLabelIds.includes(labelId)) return;
+        pendingOperations.push({ songId, labelId });
+      });
+
+      if (!pendingOperations.length) return;
+
+      const results = await Promise.all(
+        pendingOperations.map(async (operation) => {
+          try {
+            await labelApi.addToSong(operation.songId, operation.labelId);
+            addSongLabel(operation.songId, operation.labelId);
+            return operation;
+          } catch (error) {
+            console.error('Failed to apply label to song', {
+              songId: operation.songId,
+              labelId: operation.labelId,
+              error,
+            });
+            return null;
+          }
+        })
+      );
+
+      const successfulOperations = results.filter(Boolean) as LabelApplicationOperation[];
+      if (!successfulOperations.length) return;
+
+      pushUndoEntry({
+        action: 'apply-label',
+        snapshot,
+        meta: { labelApplications: successfulOperations },
+      });
+    },
+    [addSongLabel, labelsBySongId, pushUndoEntry]
+  );
+
+  const getCanvasDropPosition = useCallback(
+    (event: React.DragEvent, container: HTMLDivElement) => {
+      const rect = container.getBoundingClientRect();
+      const localX = event.clientX - rect.left;
+      const localY = event.clientY - rect.top;
+      return {
+        x: (localX - viewport.panX) / viewport.zoom,
+        y: (localY - viewport.panY) / viewport.zoom,
+      };
+    },
+    [viewport.panX, viewport.panY, viewport.zoom]
+  );
+
+  const handleCanvasDragOver = useCallback((event: React.DragEvent) => {
+    const types = event.dataTransfer.types;
+    if (types.includes(DND_SONG_MIME) || types.includes(DND_LABEL_MIME)) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }, []);
+
+  const handleCanvasDrop = useCallback(
+    async (event: React.DragEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const songId = event.dataTransfer.getData(DND_SONG_MIME) as SongId;
+      const labelId = event.dataTransfer.getData(DND_LABEL_MIME) as LabelId;
+      if (!songId && !labelId) return;
+
+      event.preventDefault();
+
+      const position = getCanvasDropPosition(event, container);
+      const snapshot = createSnapshot();
+
+      if (songId) {
+        addSongInstance(songId, position);
+        pushUndoEntry({ action: 'copy', snapshot });
+        return;
+      }
+
+      if (labelId) {
+        addLabelInstance(labelId, position);
+        pushUndoEntry({ action: 'copy', snapshot });
+      }
+    },
+    [
+      addLabelInstance,
+      addSongInstance,
+      createSnapshot,
+      getCanvasDropPosition,
+      pushUndoEntry,
+    ]
+  );
+
+  const handleSongDrop = useCallback(
+    async (event: React.DragEvent, songId: SongId, instanceId: string) => {
+      const labelId = event.dataTransfer.getData(DND_LABEL_MIME) as LabelId;
+      if (!labelId) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const snapshot = createSnapshot();
+      const selectedSongIds = selectedSongItems.map((item) => item.entity.songId);
+      const shouldApplyToSelection =
+        selectedSongItems.length > 1 && selectedSongItems.some((item) => item.instanceId === instanceId);
+
+      const songIdsToApply = shouldApplyToSelection ? selectedSongIds : [songId];
+      await applyLabelToSongs(songIdsToApply, labelId, snapshot);
+    },
+    [applyLabelToSongs, createSnapshot, selectedSongItems]
+  );
+
+  const handleSongDragOver = useCallback((event: React.DragEvent) => {
+    if (event.dataTransfer.types.includes(DND_LABEL_MIME)) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }, []);
 
   const handleItemPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>, item: HydratedCanvasItem) => {
@@ -527,6 +652,8 @@ export function Canvas() {
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
         onClick={handleCanvasClick}
+        onDragOver={handleCanvasDragOver}
+        onDrop={(event) => void handleCanvasDrop(event)}
         style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
       >
         <div
@@ -544,6 +671,16 @@ export function Canvas() {
               onPointerDown={handleItemPointerDown}
               onClick={handleItemClick}
               onDoubleClick={handleItemDoubleClick}
+              onDragOver={
+                item.type === 'song'
+                  ? (event) => handleSongDragOver(event)
+                  : undefined
+              }
+              onDrop={
+                item.type === 'song'
+                  ? (event) => void handleSongDrop(event, (item as HydratedSongCanvasItem).entity.songId, item.instanceId)
+                  : undefined
+              }
             />
           ))}
           
@@ -617,9 +754,11 @@ interface CanvasItemRendererProps {
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>, item: HydratedCanvasItem) => void;
   onClick: (event: ReactMouseEvent<HTMLDivElement>, item: HydratedCanvasItem) => void;
   onDoubleClick: (event: ReactMouseEvent<HTMLDivElement>, item: HydratedCanvasItem) => void;
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
 }
 
-function CanvasItemRenderer({ item, onPointerDown, onClick, onDoubleClick }: CanvasItemRendererProps) {
+function CanvasItemRenderer({ item, onPointerDown, onClick, onDoubleClick, onDragOver, onDrop }: CanvasItemRendererProps) {
   return (
     <div
       className="canvas-item absolute"
@@ -631,6 +770,8 @@ function CanvasItemRenderer({ item, onPointerDown, onClick, onDoubleClick }: Can
       onPointerDown={(event) => onPointerDown(event, item)}
       onClick={(event) => onClick(event, item)}
       onDoubleClick={(event) => onDoubleClick(event, item)}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
     >
       {item.type === 'song' ? (
         <SongCard item={item as HydratedSongCanvasItem} />

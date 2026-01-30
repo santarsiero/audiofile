@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from './api';
+import { useStore } from '@/store';
 import type {
   GetLabelsResponse,
   CreateLabelRequest,
@@ -15,7 +16,6 @@ import type {
   CreateSuperLabelRequest,
   CreateSuperLabelResponse,
   DeleteLabelResponse,
-  AddLabelToSongRequest,
   AddLabelToSongResponse,
   RemoveLabelFromSongResponse,
   GetSongLabelsResponse,
@@ -30,7 +30,14 @@ export async function fetchLabels(): Promise<{
   labels: Label[];
   superLabels: SuperLabel[];
 }> {
-  const response = await apiClient.get<GetLabelsResponse>('labels');
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+
+  const response = await apiClient.get<GetLabelsResponse>(
+    `libraries/${activeLibraryId}/labels`
+  );
   return {
     labels: response.labels,
     superLabels: response.superLabels,
@@ -41,14 +48,28 @@ export async function fetchLabels(): Promise<{
  * Fetch a single label by ID
  */
 export async function fetchLabelById(labelId: LabelId): Promise<Label> {
-  return apiClient.get<Label>(`labels/${labelId}`);
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+  const response = await apiClient.get<{ label: Label }>(
+    `libraries/${activeLibraryId}/labels/${labelId}`
+  );
+  return response.label;
 }
 
 /**
  * Create a new regular label
  */
 export async function createLabel(data: CreateLabelRequest): Promise<Label> {
-  const response = await apiClient.post<CreateLabelResponse>('labels', data);
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+  const response = await apiClient.post<CreateLabelResponse>(
+    `libraries/${activeLibraryId}/labels`,
+    data
+  );
   return response.label;
 }
 
@@ -58,8 +79,13 @@ export async function createLabel(data: CreateLabelRequest): Promise<Label> {
 export async function createSuperLabel(
   data: CreateSuperLabelRequest
 ): Promise<SuperLabel> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+
   const response = await apiClient.post<CreateSuperLabelResponse>(
-    'labels/super',
+    `libraries/${activeLibraryId}/labels/super`,
     data
   );
   return response.superLabel;
@@ -69,8 +95,12 @@ export async function createSuperLabel(
  * Delete a label (removes from all songs)
  */
 export async function deleteLabel(labelId: LabelId): Promise<LabelId> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
   const response = await apiClient.delete<DeleteLabelResponse>(
-    `labels/${labelId}`
+    `libraries/${activeLibraryId}/labels/${labelId}`
   );
   return response.deletedLabelId;
 }
@@ -86,9 +116,12 @@ export async function addLabelToSong(
   songId: SongId,
   labelId: LabelId
 ): Promise<SongLabel> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
   const response = await apiClient.post<AddLabelToSongResponse>(
-    `songs/${songId}/labels`,
-    { labelId } as AddLabelToSongRequest
+    `libraries/${activeLibraryId}/songs/${songId}/labels/${labelId}`
   );
   return response.songLabel;
 }
@@ -100,8 +133,12 @@ export async function removeLabelFromSong(
   songId: SongId,
   labelId: LabelId
 ): Promise<{ songId: SongId; labelId: LabelId }> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
   const response = await apiClient.delete<RemoveLabelFromSongResponse>(
-    `songs/${songId}/labels/${labelId}`
+    `libraries/${activeLibraryId}/songs/${songId}/labels/${labelId}`
   );
   return { songId: response.songId, labelId: response.labelId };
 }
@@ -112,8 +149,12 @@ export async function removeLabelFromSong(
 export async function fetchSongLabels(
   songId: SongId
 ): Promise<{ labels: Label[]; superLabels: SuperLabel[] }> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
   const response = await apiClient.get<GetSongLabelsResponse>(
-    `songs/${songId}/labels`
+    `libraries/${activeLibraryId}/songs/${songId}/labels`
   );
   return {
     labels: response.labels,

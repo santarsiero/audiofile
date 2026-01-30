@@ -13,12 +13,14 @@
  */
 
 import { useStore } from '@/store';
+import type { LabelId } from '@/types/entities';
 
 export function Header() {
   const theme = useStore((state) => state.theme);
   const toggleTheme = useStore((state) => state.toggleTheme);
   const toggleLeftPanel = useStore((state) => state.togglePanel);
   const toggleRightPanel = useStore((state) => state.togglePanel);
+  const openPanel = useStore((state) => state.openPanel);
 
   return (
     <header className="bg-panel-light dark:bg-panel-dark border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
@@ -117,6 +119,7 @@ export function Header() {
             Search Song
           </button>
           <button
+            onClick={() => openPanel('left', 'add-song')}
             className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md"
           >
             + Add Song
@@ -142,6 +145,7 @@ export function Header() {
             Search Label
           </button>
           <button
+            onClick={() => openPanel('right', 'add-label')}
             className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md"
           >
             + Add Label
@@ -162,13 +166,35 @@ function ActiveLabelsRow() {
   const labelsById = useStore((state) => state.labelsById);
   const clearFilters = useStore((state) => state.clearFilters);
   const removeFilter = useStore((state) => state.removeFilter);
+  const addFilter = useStore((state) => state.addFilter);
+  const createSnapshot = useStore((state) => state.createSnapshot);
+  const pushUndoEntry = useStore((state) => state.pushUndoEntry);
+
+  const handleDragOver = (event: React.DragEvent) => {
+    if (event.dataTransfer.types.includes('application/x-audiofile-label')) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    const labelId = event.dataTransfer.getData('application/x-audiofile-label') as LabelId;
+    if (!labelId) return;
+    if (activeLabelIds.includes(labelId)) return;
+
+    event.preventDefault();
+
+    const snapshot = createSnapshot();
+    addFilter(labelId);
+    pushUndoEntry({ action: 'filters', snapshot });
+  };
 
   const containerClasses =
     'flex items-center gap-1.5 flex-nowrap overflow-x-auto overscroll-contain max-w-full min-h-[28px]';
 
   if (allSongsActive || activeLabelIds.length === 0) {
     return (
-      <div className={containerClasses}>
+      <div className={containerClasses} onDragOver={handleDragOver} onDrop={handleDrop}>
         <span className="px-2 py-1 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-md whitespace-nowrap">
           All Songs
         </span>
@@ -177,7 +203,7 @@ function ActiveLabelsRow() {
   }
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} onDragOver={handleDragOver} onDrop={handleDrop}>
       {activeLabelIds.map((labelId) => {
         const label = labelsById[labelId];
         return (

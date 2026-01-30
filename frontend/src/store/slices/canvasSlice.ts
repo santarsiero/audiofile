@@ -38,6 +38,7 @@ export type CanvasUndoActionType =
   | 'copy'
   | 'delete'
   | 'apply-label'
+  | 'filters'
   | 'rebuild';
 
 export interface LabelApplicationOperation {
@@ -54,6 +55,10 @@ export interface CanvasSnapshot {
   nextZIndex: number;
   viewport: CanvasViewport;
   selectedInstanceIds: CanvasInstanceId[];
+  filterState?: {
+    activeLabelIds: LabelId[];
+    allSongsActive: boolean;
+  };
 }
 
 export interface CanvasUndoEntry {
@@ -430,12 +435,29 @@ export const createCanvasSlice: StateCreator<
   
 
   createSnapshot: () => {
-    const { items, nextZIndex, viewport, selectedInstanceIds } = get();
+    const {
+      items,
+      nextZIndex,
+      viewport,
+      selectedInstanceIds,
+    } = get();
+
+    const filterStateSource = get() as unknown as {
+      activeLabelIds?: LabelId[];
+      allSongsActive?: boolean;
+    };
+
+    const activeLabelIds = filterStateSource.activeLabelIds ?? [];
+    const allSongsActive = filterStateSource.allSongsActive ?? true;
     return {
       items: items.map((item) => ({ ...item })),
       nextZIndex,
       viewport: { ...viewport },
       selectedInstanceIds: [...selectedInstanceIds],
+      filterState: {
+        activeLabelIds: [...activeLabelIds],
+        allSongsActive,
+      },
     };
   },
 
@@ -470,6 +492,19 @@ export const createCanvasSlice: StateCreator<
       }];
       if (updatedRedoStack.length > UNDO_STACK_LIMIT) {
         updatedRedoStack.shift();
+      }
+
+      if (undoEntry.action === 'filters') {
+        return {
+          undoStack: updatedUndoStack,
+          redoStack: updatedRedoStack,
+          activeLabelIds:
+            undoEntry.snapshot.filterState?.activeLabelIds ??
+            (prevState as unknown as { activeLabelIds: LabelId[] }).activeLabelIds,
+          allSongsActive:
+            undoEntry.snapshot.filterState?.allSongsActive ??
+            (prevState as unknown as { allSongsActive: boolean }).allSongsActive,
+        };
       }
 
       const restoredItems = undoEntry.snapshot.items.map((item) => ({ ...item }));
@@ -512,6 +547,19 @@ export const createCanvasSlice: StateCreator<
       }];
       if (updatedUndoStack.length > UNDO_STACK_LIMIT) {
         updatedUndoStack.shift();
+      }
+
+      if (redoEntry.action === 'filters') {
+        return {
+          undoStack: updatedUndoStack,
+          redoStack: updatedRedoStack,
+          activeLabelIds:
+            redoEntry.snapshot.filterState?.activeLabelIds ??
+            (prevState as unknown as { activeLabelIds: LabelId[] }).activeLabelIds,
+          allSongsActive:
+            redoEntry.snapshot.filterState?.allSongsActive ??
+            (prevState as unknown as { allSongsActive: boolean }).allSongsActive,
+        };
       }
 
       const restoredItems = redoEntry.snapshot.items.map((item) => ({ ...item }));
