@@ -39,6 +39,7 @@ import { FloatingControls } from './FloatingControls';
 
 const SHOW_CANVAS_EMPTY_STATE = false;
 const COPY_OFFSET = 24;
+const DELETE_FEEDBACK_MS = 50;
 
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,6 +81,9 @@ export function Canvas() {
   // Local pan state
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
+  const [isDeleteFlashVisible, setIsDeleteFlashVisible] = useState(false);
+  const deleteFlashTimeoutRef = useRef<number | null>(null);
 
   type DragItem = {
     instanceId: string;
@@ -274,7 +278,7 @@ export function Canvas() {
   const openPanelForItem = useCallback(
     (item: HydratedCanvasItem) => {
       if (item.type === 'song') {
-        openPanel('right', 'song-info', (item as HydratedSongCanvasItem).entity.songId);
+        openPanel('left', 'song-info', (item as HydratedSongCanvasItem).entity.songId);
       } else if (item.type === 'label') {
         openPanel('right', 'label-info', item.entityId);
       } else if (item.type === 'superlabel') {
@@ -389,6 +393,14 @@ export function Canvas() {
   useEffect(() => cancelDrag, [cancelDrag]);
 
   useEffect(() => {
+    return () => {
+      if (deleteFlashTimeoutRef.current !== null) {
+        window.clearTimeout(deleteFlashTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!dragStateRef.current) return;
     const currentIds = new Set(items.map((item) => item.instanceId));
     const stillValid = dragStateRef.current.items.every((dragItem) => currentIds.has(dragItem.instanceId));
@@ -397,14 +409,25 @@ export function Canvas() {
     }
   }, [items, cancelDrag]);
 
-  const handleDeleteSelection = useCallback(() => {
+  const deleteSelectedInstances = useCallback(() => {
     if (!selectedItems.length) return;
+
+    setIsDeleteFlashVisible(true);
+    if (deleteFlashTimeoutRef.current !== null) {
+      window.clearTimeout(deleteFlashTimeoutRef.current);
+    }
+    requestAnimationFrame(() => {
+      deleteFlashTimeoutRef.current = window.setTimeout(() => {
+        setIsDeleteFlashVisible(false);
+        deleteFlashTimeoutRef.current = null;
+      }, DELETE_FEEDBACK_MS);
+    });
 
     const snapshot = createSnapshot();
     selectedItems.forEach((item) => removeInstance(item.instanceId));
     clearSelection();
     pushUndoEntry({ action: 'delete', snapshot });
-  }, [selectedItems, removeInstance, clearSelection, createSnapshot, pushUndoEntry]);
+  }, [selectedItems, createSnapshot, removeInstance, clearSelection, pushUndoEntry]);
 
   const handleCopySelection = useCallback(() => {
     if (!selectedItems.length) return;
@@ -490,6 +513,12 @@ export function Canvas() {
   return (
     <div className="relative h-full w-full">
       <div
+        className={`pointer-events-none absolute inset-0 z-40 bg-white/10 opacity-0 transition-opacity ${
+          isDeleteFlashVisible ? 'opacity-100' : ''
+        }`}
+        style={{ transitionDuration: `${DELETE_FEEDBACK_MS}ms` }}
+      />
+      <div
         ref={containerRef}
         className="canvas-container h-full w-full overflow-auto overscroll-contain"
         onMouseDown={handleMouseDown}
@@ -567,7 +596,7 @@ export function Canvas() {
         <button
           type="button"
           className="pointer-events-auto px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 disabled:opacity-40"
-          onClick={handleDeleteSelection}
+          onClick={deleteSelectedInstances}
           disabled={selectedItems.length === 0}
         >
           Delete

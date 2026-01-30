@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/store';
+import { songApi } from '@/services/songApi';
 
 export function LeftPanel() {
   const contentType = useStore((state) => state.left.contentType);
@@ -61,6 +63,8 @@ function getPanelTitle(contentType: string | null): string {
       return 'Search Results';
     case 'add-song':
       return 'Add Song';
+    case 'song-info':
+      return 'Song Details';
     default:
       return 'Songs';
   }
@@ -74,9 +78,104 @@ function PanelContent({ contentType }: { contentType: string | null }) {
       return <SearchResultsPlaceholder />;
     case 'add-song':
       return <AddSongPlaceholder />;
+    case 'song-info':
+      return <SongInfo />;
     default:
       return <SongListPlaceholder />;
   }
+}
+
+function SongInfo() {
+  const songId = useStore((state) => state.left.entityId);
+  const song = useStore((state) => (songId ? state.songsById[songId] : undefined));
+  const removeSong = useStore((state) => state.removeSong);
+  const removeAllInstancesOfEntity = useStore((state) => state.removeAllInstancesOfEntity);
+  const setPanelContent = useStore((state) => state.setPanelContent);
+
+  const [isDeleteArmed, setIsDeleteArmed] = useState(false);
+  const deleteArmTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (deleteArmTimeoutRef.current !== null) {
+        window.clearTimeout(deleteArmTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleDeleteSong = async () => {
+    if (!songId) return;
+
+    if (!isDeleteArmed) {
+      setIsDeleteArmed(true);
+      if (deleteArmTimeoutRef.current !== null) {
+        window.clearTimeout(deleteArmTimeoutRef.current);
+      }
+      deleteArmTimeoutRef.current = window.setTimeout(() => {
+        setIsDeleteArmed(false);
+        deleteArmTimeoutRef.current = null;
+      }, 2500);
+      return;
+    }
+
+    setIsDeleteArmed(false);
+
+    // ARCHITECTURAL GUARDRAIL:
+    // This is a PERMANENT library-level delete of the canonical Song entity.
+    // It must never be undoable and must never push an undo entry.
+    // Canvas delete is intentionally different: it only deletes canvas instances and is undoable.
+    const confirmed = window.confirm(
+      'Permanently delete this song from your library? This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    await songApi.delete(songId);
+    removeSong(songId);
+    removeAllInstancesOfEntity(songId);
+    setPanelContent('left', 'song-list');
+  };
+
+  if (!songId) {
+    return (
+      <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
+        <p className="text-sm">No song selected</p>
+      </div>
+    );
+  }
+
+  if (!song) {
+    return (
+      <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
+        <p className="text-sm">Song not found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={song.nickname || song.displayTitle}>
+          {song.nickname || song.displayTitle}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={song.displayArtist}>
+          {song.displayArtist}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className={`w-full px-3 py-2 text-sm rounded-md border border-red-600 dark:border-red-500 bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 ${
+          isDeleteArmed ? 'ring-2 ring-red-400 ring-offset-2 ring-offset-panel-light dark:ring-offset-panel-dark' : ''
+        }`}
+        onClick={() => void handleDeleteSong()}
+      >
+        {isDeleteArmed ? 'Click again to permanently delete' : 'Delete Song (Permanent)'}
+      </button>
+      <p className="text-xs text-red-700/80 dark:text-red-300/80">
+        Permanent. Not undoable.
+      </p>
+    </div>
+  );
 }
 
 function SongListPlaceholder() {

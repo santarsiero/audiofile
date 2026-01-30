@@ -8,6 +8,7 @@
  */
 
 import { apiClient } from './api';
+import { useStore } from '@/store';
 import type {
   GetSongsResponse,
   CreateSongRequest,
@@ -60,8 +61,16 @@ export async function updateSong(
  * Delete a song (soft delete)
  */
 export async function deleteSong(songId: SongId): Promise<SongId> {
+  // GUARDRAIL: This performs a PERMANENT library-level delete of the canonical Song entity.
+  // It must ONLY be called from explicitly-confirmed destructive UI (e.g. Left Song Details).
+  // It must never be wired to canvas delete, keyboard shortcuts, undo/redo, or system pipelines.
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+
   const response = await apiClient.delete<DeleteSongResponse>(
-    `songs/${songId}`
+    `libraries/${activeLibraryId}/songs/${songId}`
   );
   return response.deletedSongId;
 }
