@@ -18,7 +18,6 @@ import type { LabelId } from '@/types/entities';
 export function Header() {
   const theme = useStore((state) => state.theme);
   const toggleTheme = useStore((state) => state.toggleTheme);
-  const toggleLeftPanel = useStore((state) => state.togglePanel);
   const toggleRightPanel = useStore((state) => state.togglePanel);
   const openPanel = useStore((state) => state.openPanel);
 
@@ -113,7 +112,7 @@ export function Header() {
         {/* Left side: Song controls */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
-            onClick={() => toggleLeftPanel('left')}
+            onClick={() => openPanel('left', 'search-results')}
             className="px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
           >
             Search Song

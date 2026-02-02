@@ -1,0 +1,35 @@
+{
+  "results": {
+    "songs": {
+      "data": [
+        {
+          "id": "999000111",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/999000111",
+          "attributes": {
+            "name": "No Artwork Track",
+            "artistName": "Unknown Artist",
+            "albumName": "Unknown Album",
+            "durationInMillis": 180000
+          }
+        },
+        {
+          "id": "999000222",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/999000222",
+          "attributes": {
+            "name": "Has Artwork Track",
+            "artistName": "Some Artist",
+            "albumName": "Some Album",
+            "durationInMillis": 200000,
+            "artwork": {
+              "width": 800,
+              "height": 800,
+              "url": "https://is2-ssl.mzstatic.com/image/thumb/Music126/v4/11/22/33/{w}x{h}bb.jpg"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

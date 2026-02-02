@@ -12,6 +12,7 @@ import SongSource from "./models/SongSource.js";
 import LabelMode from "./models/LabelMode.js";
 import LabelModeLabel from "./models/LabelModeLabel.js";
 import librariesRouter from "./routes/libraries.js";
+import providersRouter from "./routes/providers.js";
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/libraries", librariesRouter);
+app.use("/api/providers", providersRouter);
 console.log(
   "Mounted /api/libraries routes:",
   (librariesRouter?.stack || [])

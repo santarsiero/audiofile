@@ -19,3 +19,4 @@ export { songApi } from './songApi';
 export { labelApi } from './labelApi';
 export { filterApi } from './filterApi';
 export { modeApi } from './modeApi';
+export { providerApi } from './providerApi';

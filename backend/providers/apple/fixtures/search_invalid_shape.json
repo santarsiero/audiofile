@@ -1,0 +1,30 @@
+{
+  "results": {
+    "songs": {
+      "data": [
+        {
+          "id": "bad001",
+          "type": "songs",
+          "attributes": {
+            "name": "",
+            "artistName": "Valid Artist"
+          }
+        },
+        {
+          "id": "bad002",
+          "type": "songs",
+          "attributes": {
+            "name": "Valid Title"
+          }
+        },
+        {
+          "id": "bad003",
+          "type": "songs",
+          "attributes": {
+            "artistName": "Missing Title"
+          }
+        }
+      ]
+    }
+  }
+}

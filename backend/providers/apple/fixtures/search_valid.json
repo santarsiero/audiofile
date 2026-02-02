@@ -1,0 +1,40 @@
+{
+  "results": {
+    "songs": {
+      "data": [
+        {
+          "id": "203709340",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/203709340",
+          "attributes": {
+            "name": "Harder, Better, Faster, Stronger",
+            "artistName": "Daft Punk",
+            "albumName": "Discovery",
+            "durationInMillis": 224000,
+            "artwork": {
+              "width": 1000,
+              "height": 1000,
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/aa/bb/cc/{w}x{h}bb.jpg"
+            }
+          }
+        },
+        {
+          "id": "1440833084",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/1440833084",
+          "attributes": {
+            "name": "Space Oddity",
+            "artistName": "David Bowie",
+            "albumName": "David Bowie",
+            "durationInMillis": 316000,
+            "artwork": {
+              "width": 1200,
+              "height": 1200,
+              "url": "https://is5-ssl.mzstatic.com/image/thumb/Music125/v4/dd/ee/ff/{w}x{h}bb.jpg"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

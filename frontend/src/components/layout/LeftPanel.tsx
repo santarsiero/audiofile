@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/store';
 import { songApi } from '@/services/songApi';
 import { labelApi } from '@/services/labelApi';
+import { providerApi } from '@/services/providerApi';
 import type { SongId, LabelId } from '@/types/entities';
 
 export function LeftPanel() {
@@ -277,9 +278,238 @@ function SongsOnCanvasList() {
 }
 
 function SearchResultsPlaceholder() {
+  const [scope, setScope] = useState<'library' | 'external'>('library');
+  const [query, setQuery] = useState('');
+  const [providerType, setProviderType] = useState('APPLE_MUSIC');
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<Array<{
+    title: string;
+    artist: string;
+    providerTrackId: string;
+    providerType: string;
+    album?: string;
+    artwork?: string;
+    durationMs?: number;
+    raw?: unknown;
+  }>>([]);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [importStateByKey, setImportStateByKey] = useState<
+    Record<string, { status: 'idle' | 'loading' | 'success' | 'error'; message?: string }>
+  >({});
+
+  const handleExternalSearch = async () => {
+    setHasSearched(true);
+    setHasError(false);
+    setIsLoading(true);
+    try {
+      const response = await providerApi.searchProviders({ providerType, query: query.trim() });
+      setResults(response.results);
+    } catch (err) {
+      console.error('[ui.external_search]', err);
+      setResults([]);
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImport = async (item: {
+    title: string;
+    artist: string;
+    providerTrackId: string;
+    providerType: string;
+    album?: string;
+    artwork?: string;
+    durationMs?: number;
+    raw?: unknown;
+  }) => {
+    const key = `${item.providerType}:${item.providerTrackId}`;
+    setImportStateByKey((prev) => ({ ...prev, [key]: { status: 'loading' } }));
+
+    const displayTitle = item.title;
+    const displayArtist = item.artist;
+
+    const providerImport = {
+      providerType: item.providerType,
+      providerTrackId: item.providerTrackId,
+    };
+
+    const providerMetadata: Record<string, unknown> = {
+      providerType: item.providerType,
+      providerTrackId: item.providerTrackId,
+      raw: item.raw,
+    };
+
+    const providerImportPartial =
+      typeof providerImport.providerType !== 'string' ||
+      providerImport.providerType.trim().length === 0 ||
+      typeof providerImport.providerTrackId !== 'string' ||
+      providerImport.providerTrackId.trim().length === 0;
+
+    try {
+      await songApi.create({
+        displayTitle,
+        displayArtist,
+        officialTitle: null,
+        officialArtist: null,
+        albumName: item.album ?? null,
+        albumArtUrl: item.artwork ?? null,
+        durationMs: typeof item.durationMs === 'number' ? item.durationMs : null,
+        providerMetadata,
+        providerImport,
+        providerImportPartial,
+      });
+
+      setImportStateByKey((prev) => ({
+        ...prev,
+        [key]: { status: 'success', message: 'Imported' },
+      }));
+    } catch (err) {
+      console.error('[ui.external_search.import_failed]', err);
+      setImportStateByKey((prev) => ({
+        ...prev,
+        [key]: { status: 'error', message: 'Import failed' },
+      }));
+    }
+  };
+
   return (
-    <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-      <p className="text-sm">Search results will appear here</p>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setScope('library')}
+          className={`px-3 py-1.5 text-sm rounded-md border ${
+            scope === 'library'
+              ? 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+              : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300'
+          }`}
+        >
+          Library
+        </button>
+        <button
+          type="button"
+          onClick={() => setScope('external')}
+          className={`px-3 py-1.5 text-sm rounded-md border ${
+            scope === 'external'
+              ? 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+              : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300'
+          }`}
+        >
+          External
+        </button>
+      </div>
+
+      {scope === 'library' && (
+        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
+          <p className="text-sm">Search results will appear here</p>
+        </div>
+      )}
+
+      {scope === 'external' && (
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <select
+                value={providerType}
+                onChange={(e) => setProviderType(e.target.value)}
+                className="h-9 px-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+              >
+                <option value="APPLE_MUSIC">APPLE_MUSIC</option>
+              </select>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search external provider…"
+                className="flex-1 h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+              />
+            </div>
+
+            <button
+              type="button"
+              disabled={isLoading || query.trim().length === 0}
+              onClick={() => void handleExternalSearch()}
+              className="w-full px-3 py-2 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+            >
+              {isLoading ? 'Searching…' : 'Search'}
+            </button>
+          </div>
+
+          {hasError && (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 text-sm text-gray-600 dark:text-gray-300">
+              Couldn’t fetch results. Try again.
+            </div>
+          )}
+
+          {!hasError && hasSearched && !isLoading && results.length === 0 && (
+            <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
+              <p className="text-sm">No matches found</p>
+            </div>
+          )}
+
+          {!hasError && results.length > 0 && (
+            <div className="space-y-2">
+              {results.map((item) => (
+                <div
+                  key={`${item.providerType}:${item.providerTrackId}`}
+                  className="rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                      {item.artwork ? (
+                        <img
+                          src={item.artwork}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                          No Art
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={item.title}>
+                        {item.title}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={item.artist}>
+                        {item.artist}
+                      </div>
+                      {item.album && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={item.album}>
+                          {item.album}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => void handleImport(item)}
+                        disabled={importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'loading'}
+                        className="px-3 py-1.5 text-xs rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-40"
+                      >
+                        {importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'loading'
+                          ? 'Importing…'
+                          : 'Import'}
+                      </button>
+                      {importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'success' && (
+                        <span className="text-xs text-green-700/80 dark:text-green-300/80">Imported</span>
+                      )}
+                      {importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'error' && (
+                        <span className="text-xs text-red-700/80 dark:text-red-300/80">Import failed</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

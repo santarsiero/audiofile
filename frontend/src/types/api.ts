@@ -90,6 +90,12 @@ export interface CreateSongRequest {
   releaseYear?: number | null;
   nickname?: string | null;
   notes?: string | null;
+  providerMetadata?: Record<string, unknown> | null;
+  providerImport?: {
+    providerType?: string;
+    providerTrackId?: string;
+  } | null;
+  providerImportPartial?: boolean | null;
 }
 
 /** POST /songs response */
