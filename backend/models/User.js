@@ -27,6 +27,19 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    passwordHash: {
+      type: String,
+      required: true,
+    },
+    authProvider: {
+      type: String,
+      required: true,
+      default: 'local',
+    },
+    lastLoginAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

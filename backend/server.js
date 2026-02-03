@@ -11,16 +11,20 @@ import SuperLabelComponent from "./models/SuperLabelComponent.js";
 import SongSource from "./models/SongSource.js";
 import LabelMode from "./models/LabelMode.js";
 import LabelModeLabel from "./models/LabelModeLabel.js";
+import RefreshToken from "./models/RefreshToken.js";
 import librariesRouter from "./routes/libraries.js";
 import providersRouter from "./routes/providers.js";
+import authRouter from "./routes/auth.js";
+import { requireAuth } from "./middleware/requireAuth.js";
 
 dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/libraries", librariesRouter);
+app.use("/api/libraries", requireAuth, librariesRouter);
 app.use("/api/providers", providersRouter);
+app.use("/api/auth", authRouter);
 console.log(
   "Mounted /api/libraries routes:",
   (librariesRouter?.stack || [])

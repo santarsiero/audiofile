@@ -81,10 +81,12 @@ async function verifyPhase2Models() {
     console.log('📝 TEST 1: Creating User...');
     const userId = process.env.DEFAULT_USER_ID || makeId('user');
     const userEmail = process.env.DEFAULT_USER_EMAIL || `${makeId('test')}@audiofile.dev`;
+    const devPasswordHash = '$argon2id$dev-placeholder$NOT_A_REAL_HASH';
     
     const user = await User.create({
       userId,
       email: userEmail,
+      passwordHash: devPasswordHash,
     });
     createdIds.users.push(user.userId);
     console.log(`✅ User created: ${user.userId} (${user.email})\n`);
@@ -207,6 +209,7 @@ async function verifyPhase2Models() {
       await User.create({
         userId: makeId('user'),
         email: user.email, // Same email
+        passwordHash: devPasswordHash,
       });
       console.log('❌ FAIL: Duplicate user email was allowed');
     } catch (error) {

@@ -4,6 +4,7 @@
  * Handles library-level operations including bootstrap.
  */
 import express from 'express';
+import Library from '../models/Library.js';
 import { getBootstrap } from '../services/LibraryBootstrapService.js';
 import songsRouter from './songs.js'; 
 import labelsRouter from './labels.js'; 
@@ -12,6 +13,23 @@ import filterRouter from './filter.js';
 import modesRouter from './modes.js'; 
 
 const router = express.Router();
+
+router.use('/:libraryId', async (req, res, next) => {
+  const { libraryId } = req.params;
+  const userId = req.user?.userId;
+
+  const library = await Library.findOne({ libraryId }).lean();
+
+  if (!library) {
+    return res.status(404).json({ error: 'Library not found' });
+  }
+
+  if (library.ownerUserId !== userId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  return next();
+});
 
 /**
  * GET /api/libraries/:libraryId/bootstrap
@@ -38,7 +56,7 @@ router.get('/:libraryId/bootstrap', async (req, res) => {
   } catch (error) {
     // Handle 404 (library not found)
     if (error.status === 404) {
-      return res.status(404).json({ error: error.message });
+      return res.status(404).json({ error: 'Library not found' });
     }
     // Handle all other errors as 500
     console.error('Bootstrap error:', error);
