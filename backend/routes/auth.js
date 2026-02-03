@@ -15,6 +15,7 @@ const router = express.Router();
 
 async function register(req, res) {
   try {
+    console.log("[REGISTER BODY]", req.body);
     const { email, password } = req.body || {};
 
     if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
@@ -60,7 +61,8 @@ async function register(req, res) {
         email: user.email,
       },
     });
-  } catch (error) {
+  } catch (err) {
+    console.error("[REGISTER ERROR]", err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

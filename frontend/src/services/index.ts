@@ -13,6 +13,9 @@
 // Base API client
 export { apiClient, checkApiHealth, ApiClientError, isApiClientError } from './api';
 
+// Auth token storage
+export { getAccessToken, setAccessToken, getRefreshToken, setRefreshToken, clearTokens } from './authTokens';
+
 // Individual service modules
 export { libraryApi } from './libraryApi';
 export { songApi } from './songApi';

@@ -11,6 +11,7 @@
  */
 
 import type { ApiError } from '@/types/api';
+import { getAccessToken } from './authTokens';
 
 // =============================================================================
 // CONFIGURATION
@@ -106,6 +107,18 @@ function getDefaultHeaders(): HeadersInit {
   };
 }
 
+function withAuthHeader(headers: HeadersInit): HeadersInit {
+  const token = getAccessToken();
+  if (!token) {
+    return headers;
+  }
+
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 /**
  * Create abort controller with timeout
  */
@@ -139,7 +152,7 @@ async function request<T>(
   try {
     const response = await fetch(url, {
       method,
-      headers: getDefaultHeaders(),
+      headers: withAuthHeader(getDefaultHeaders()),
       body: body ? JSON.stringify(body) : undefined,
       signal: controller.signal,
     });

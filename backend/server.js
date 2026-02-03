@@ -17,6 +17,14 @@ import providersRouter from "./routes/providers.js";
 import authRouter from "./routes/auth.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 
+process.on("uncaughtException", (err) => {
+  console.error("[UNCAUGHT EXCEPTION]", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[UNHANDLED REJECTION]", reason);
+});
+
 dotenv.config();
 const app = express();
 app.use(cors());
