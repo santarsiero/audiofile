@@ -14,6 +14,29 @@ import modesRouter from './modes.js';
 
 const router = express.Router();
 
+router.get('/', async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+
+    const libraries = await Library.find({ ownerUserId: userId })
+      .select('libraryId name createdAt updatedAt')
+      .sort({ createdAt: 1 })
+      .lean();
+
+    return res.status(200).json({
+      libraries: (libraries ?? []).map((lib) => ({
+        libraryId: lib.libraryId,
+        name: lib.name,
+        createdAt: lib.createdAt,
+        updatedAt: lib.updatedAt,
+      })),
+    });
+  } catch (error) {
+    console.error('List libraries error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.use('/:libraryId', async (req, res, next) => {
   const { libraryId } = req.params;
   const userId = req.user?.userId;

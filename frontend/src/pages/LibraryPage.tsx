@@ -16,15 +16,13 @@ import { Canvas } from '@/components/canvas/Canvas';
 import * as libraryApi from '@/services/libraryApi';
 import { runCanvasLayoutPipeline } from '@/orchestrators/runCanvasLayoutPipeline';
 
-// Temporary: hardcoded library ID for MVP
-// In production, this would come from auth/session
-const DEFAULT_LIBRARY_ID = 'lib_default';
-
 export function LibraryPage() {
   const hasInitializedCanvasRef = useRef(false);
+  const hasInitializedLibraryRef = useRef(false);
   const {
     isBootstrapping,
     bootstrapError,
+    activeLibraryId,
     setActiveLibrary,
     setLibraryData,
     setBootstrapping,
@@ -37,6 +35,7 @@ export function LibraryPage() {
   } = useStore((state) => ({
     isBootstrapping: state.isBootstrapping,
     bootstrapError: state.bootstrapError,
+    activeLibraryId: state.activeLibraryId,
     setActiveLibrary: state.setActiveLibrary,
     setLibraryData: state.setLibraryData,
     setBootstrapping: state.setBootstrapping,
@@ -50,13 +49,31 @@ export function LibraryPage() {
 
   // Bootstrap library on mount
   useEffect(() => {
-    setActiveLibrary(DEFAULT_LIBRARY_ID);
-    setBootstrapping(true);
-    setBootstrapError(null);
+    if (hasInitializedLibraryRef.current) {
+      return;
+    }
 
-    libraryApi
-      .bootstrapLibrary(DEFAULT_LIBRARY_ID)
-      .then((data) => {
+    hasInitializedLibraryRef.current = true;
+
+    async function init() {
+      setBootstrapping(true);
+      setBootstrapError(null);
+
+      try {
+        const { libraries } = await libraryApi.listLibraries();
+
+        const selectedLibraryId =
+          activeLibraryId ?? libraries?.[0]?.libraryId ?? null;
+
+        if (!selectedLibraryId) {
+          throw new Error('No libraries found.');
+        }
+
+        if (!activeLibraryId) {
+          setActiveLibrary(selectedLibraryId);
+        }
+
+        const data = await libraryApi.bootstrapLibrary(selectedLibraryId);
         setBootstrapError(null);
         setLibraryData(data.library);
         setSongs(data.songs ?? []);
@@ -73,12 +90,14 @@ export function LibraryPage() {
           runCanvasLayoutPipeline({ recordUndo: false });
           hasInitializedCanvasRef.current = true;
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Failed to load library.';
         setBootstrapError(message);
-      });
+      }
+    }
+
+    init();
   }, [
     setActiveLibrary,
     setBootstrapping,
@@ -89,6 +108,7 @@ export function LibraryPage() {
     setLabels,
     setSongLabels,
     setModes,
+    activeLibraryId,
   ]);
 
   // Loading state

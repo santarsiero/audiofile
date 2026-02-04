@@ -535,7 +535,9 @@ function AddSongForm() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!title.trim() || !artist.trim()) return;
+    if (!title.trim() || !artist.trim()) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {

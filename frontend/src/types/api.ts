@@ -54,6 +54,10 @@ export interface HealthCheckResponse {
 // LIBRARY BOOTSTRAP
 // =============================================================================
 
+export interface ListLibrariesResponse {
+  libraries: Pick<Library, 'libraryId' | 'name' | 'createdAt' | 'updatedAt'>[];
+}
+
 /**
  * Bootstrap response - initial data load for a library
  * Returns all data needed to initialize the frontend state

@@ -15,7 +15,6 @@ const router = express.Router();
 
 async function register(req, res) {
   try {
-    console.log("[REGISTER BODY]", req.body);
     const { email, password } = req.body || {};
 
     if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {

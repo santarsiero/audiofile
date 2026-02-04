@@ -6,7 +6,7 @@
  */
 
 import { apiClient } from './api';
-import type { LibraryBootstrapResponse } from '@/types/api';
+import type { LibraryBootstrapResponse, ListLibrariesResponse } from '@/types/api';
 import type { LibraryId } from '@/types/entities';
 
 /**
@@ -23,9 +23,14 @@ export async function bootstrapLibrary(
   );
 }
 
+export async function listLibraries(): Promise<ListLibrariesResponse> {
+  return apiClient.get<ListLibrariesResponse>('libraries');
+}
+
 /**
  * Library API service object
  */
 export const libraryApi = {
   bootstrap: bootstrapLibrary,
+  list: listLibraries,
 } as const;
