@@ -26,6 +26,7 @@ export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): voi
   const { recordUndo = true } = options ?? {};
   const store = useStore.getState();
   const {
+    activeLibraryId,
     songIds,
     songsByLabelId,
     superLabelsById,
@@ -33,6 +34,8 @@ export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): voi
     songsById,
     activeLabelIds,
     allSongsActive,
+    labelIds,
+    superLabelIds,
     setItems,
     createSnapshot,
     pushUndoEntry,
@@ -40,6 +43,20 @@ export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): voi
     markRebuildStart,
     clearSelection,
   } = store;
+
+  // TEMP[libraryId-coherence]: trace which libraryId canvas pipeline is operating under (remove after Phase 11)
+  console.log('TEMP[libraryId-coherence] runCanvasLayoutPipeline start', {
+    file: 'orchestrators/runCanvasLayoutPipeline.ts',
+    fn: 'runCanvasLayoutPipeline',
+    activeLibraryIdAtRun: activeLibraryId,
+    canonicalSongCount: songIds.length,
+    canonicalLabelCount: labelIds?.length ?? Object.keys(labelsById).length,
+    canonicalSuperLabelCount: superLabelIds?.length ?? Object.keys(superLabelsById).length,
+    activeLabelIdsCount: activeLabelIds.length,
+    allSongsActive,
+    existingCanvasItemsCount: items.length,
+    stack: new Error().stack,
+  });
 
   markRebuildStart();
 
@@ -51,6 +68,14 @@ export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): voi
     allSongsActive,
   });
 
+  // TEMP[libraryId-coherence]: trace selection output (remove after Phase 11)
+  console.log('TEMP[libraryId-coherence] runCanvasLayoutPipeline selection', {
+    file: 'orchestrators/runCanvasLayoutPipeline.ts',
+    fn: 'runCanvasLayoutPipeline',
+    activeLibraryIdAtRun: activeLibraryId,
+    selectedSongCount: songIdsToPlace.length,
+  });
+
   const songInstances = createSongInstances(songIdsToPlace);
   const labelEntityMap = buildLabelEntityMap(labelsById, superLabelsById);
   const layoutResult = alphabeticalGridLayoutEngine(songInstances, undefined, {
@@ -59,6 +84,13 @@ export function runCanvasLayoutPipeline(options?: { recordUndo?: boolean }): voi
   });
 
   const positionedItems = applyLayoutToItems(songInstances, layoutResult.items);
+  // TEMP[libraryId-coherence]: trace render output counts (remove after Phase 11)
+  console.log('TEMP[libraryId-coherence] runCanvasLayoutPipeline output', {
+    file: 'orchestrators/runCanvasLayoutPipeline.ts',
+    fn: 'runCanvasLayoutPipeline',
+    activeLibraryIdAtRun: activeLibraryId,
+    positionedSongInstanceCount: positionedItems.length,
+  });
   const shouldRecordUndo = recordUndo && items.length > 0;
   const snapshot = shouldRecordUndo ? createSnapshot() : null;
 

@@ -221,6 +221,16 @@ function AddLabelForm() {
 
     setIsSubmitting(true);
     try {
+
+      // TEMP[libraryId-coherence]: trace label creation call site (remove after Phase 11)
+      console.log('TEMP[libraryId-coherence] RightPanel.AddLabelForm -> labelApi.create', {
+        file: 'components/layout/RightPanel.tsx',
+        fn: 'handleSubmit',
+        activeLibraryIdAtCall: useStore.getState().activeLibraryId,
+        labelName: name.trim(),
+        stack: new Error().stack,
+      });
+
       const created = await labelApi.create({ name: name.trim() });
       addLabel(created);
       setPanelContent('right', 'label-info', created.labelId);

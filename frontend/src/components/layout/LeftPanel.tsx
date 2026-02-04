@@ -528,6 +528,15 @@ function AddSongForm() {
   const ensureManualLabel = async (): Promise<LabelId> => {
     const existing = Object.values(labelsById).find((label) => label.name === 'Manual');
     if (existing) return existing.labelId as LabelId;
+
+    // TEMP[libraryId-coherence]: trace label creation call site (remove after Phase 11)
+    console.log('TEMP[libraryId-coherence] LeftPanel.ensureManualLabel -> labelApi.create', {
+      file: 'components/layout/LeftPanel.tsx',
+      fn: 'ensureManualLabel',
+      activeLibraryIdAtCall: useStore.getState().activeLibraryId,
+      labelName: 'Manual',
+      stack: new Error().stack,
+    });
     const created = await labelApi.create({ name: 'Manual' });
     addLabel(created);
     return created.labelId;
@@ -541,6 +550,17 @@ function AddSongForm() {
 
     setIsSubmitting(true);
     try {
+
+      // TEMP[libraryId-coherence]: trace song creation call site (remove after Phase 11)
+      console.log('TEMP[libraryId-coherence] LeftPanel.AddSongForm -> songApi.create', {
+        file: 'components/layout/LeftPanel.tsx',
+        fn: 'handleSubmit',
+        activeLibraryIdAtCall: useStore.getState().activeLibraryId,
+        displayTitle: title.trim(),
+        displayArtist: artist.trim(),
+        stack: new Error().stack,
+      });
+
       const createdSong = await songApi.create({
         displayTitle: title.trim(),
         displayArtist: artist.trim(),

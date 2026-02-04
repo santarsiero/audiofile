@@ -48,6 +48,7 @@ const DND_LABEL_MIME = 'application/x-audiofile-label';
 export function Canvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const activeLibraryId = useStore((state) => state.activeLibraryId);
   
   // Canvas state from store
   const items = useStore((state) => state.items);
@@ -223,6 +224,25 @@ export function Canvas() {
       }
     })
     .filter(Boolean) as HydratedCanvasItem[];
+
+  useEffect(() => {
+    // TEMP[libraryId-coherence]: trace canvas render counts under current activeLibraryId (remove after Phase 11)
+    const songInstanceCount = hydratedItems.filter((item) => item.type === 'song').length;
+    const labelInstanceCount = hydratedItems.filter((item) => item.type === 'label').length;
+    const superLabelInstanceCount = hydratedItems.filter((item) => item.type === 'superlabel').length;
+    console.log('TEMP[libraryId-coherence] Canvas render snapshot', {
+      file: 'components/canvas/Canvas.tsx',
+      fn: 'Canvas',
+      activeLibraryIdAtRender: activeLibraryId,
+      canonicalSongsCount: Object.keys(songsById).length,
+      canonicalLabelsCount: Object.keys(labelsById).length,
+      canonicalSuperLabelsCount: Object.keys(superLabelsById).length,
+      hydratedTotalCount: hydratedItems.length,
+      songInstanceCount,
+      labelInstanceCount,
+      superLabelInstanceCount,
+    });
+  }, [activeLibraryId, hydratedItems, songsById, labelsById, superLabelsById]);
 
   const selectedItems = hydratedItems.filter((item) => item.isSelected);
   const selectedSongItems = selectedItems.filter(

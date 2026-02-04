@@ -55,6 +55,13 @@ export const createLibrarySlice: StateCreator<
   ...initialState,
   
   setActiveLibrary: (libraryId) => {
+    // TEMP[libraryId-coherence]: trace when activeLibraryId is set (remove after Phase 11)
+    console.log('TEMP[libraryId-coherence] setActiveLibrary', {
+      file: 'store/slices/librarySlice.ts',
+      fn: 'setActiveLibrary',
+      libraryId,
+      stack: new Error().stack,
+    });
     set({
       activeLibraryId: libraryId,
       isBootstrapped: false,

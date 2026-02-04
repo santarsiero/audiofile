@@ -15,6 +15,7 @@ import { create } from 'zustand';
 import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
 
 import {
+  createAuthSlice,
   createLibrarySlice,
   createSongsSlice,
   createLabelsSlice,
@@ -25,6 +26,7 @@ import {
   createPanelsSlice,
 } from './slices';
 
+import type { AuthSlice } from './slices/authSlice';
 import type { LibrarySlice } from './slices/librarySlice';
 import type { SongsSlice } from './slices/songsSlice';
 import type { LabelsSlice } from './slices/labelsSlice';
@@ -42,6 +44,7 @@ import type { PanelsSlice } from './slices/panelsSlice';
  * Complete store type combining all slices
  */
 export type AppStore = LibrarySlice &
+  AuthSlice &
   SongsSlice &
   LabelsSlice &
   FiltersSlice &
@@ -67,6 +70,7 @@ export const useStore = create<AppStore>()(
     subscribeWithSelector(
       persist(
         (...args) => ({
+          ...createAuthSlice(...args),
           ...createLibrarySlice(...args),
           ...createSongsSlice(...args),
           ...createLabelsSlice(...args),

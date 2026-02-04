@@ -20,6 +20,8 @@ export function Header() {
   const toggleTheme = useStore((state) => state.toggleTheme);
   const toggleRightPanel = useStore((state) => state.togglePanel);
   const openPanel = useStore((state) => state.openPanel);
+  const activeLibraryId = useStore((state) => state.activeLibraryId);
+  const canOpenCreatePanels = Boolean(activeLibraryId);
 
   return (
     <header className="bg-panel-light dark:bg-panel-dark border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
@@ -119,7 +121,8 @@ export function Header() {
           </button>
           <button
             onClick={() => openPanel('left', 'add-song')}
-            className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md"
+            disabled={!canOpenCreatePanels}
+            className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
           >
             + Add Song
           </button>
@@ -145,7 +148,8 @@ export function Header() {
           </button>
           <button
             onClick={() => openPanel('right', 'add-label')}
-            className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md"
+            disabled={!canOpenCreatePanels}
+            className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md disabled:opacity-40 disabled:cursor-not-allowed"
           >
             + Add Label
           </button>

@@ -19,6 +19,7 @@ import { runCanvasLayoutPipeline } from '@/orchestrators/runCanvasLayoutPipeline
 export function LibraryPage() {
   const hasInitializedCanvasRef = useRef(false);
   const hasInitializedLibraryRef = useRef(false);
+  const hasSetDefaultLibraryRef = useRef(false);
   const {
     isBootstrapping,
     bootstrapError,
@@ -62,16 +63,41 @@ export function LibraryPage() {
       try {
         const { libraries } = await libraryApi.listLibraries();
 
-        const selectedLibraryId =
-          activeLibraryId ?? libraries?.[0]?.libraryId ?? null;
-
-        if (!selectedLibraryId) {
+        const defaultLibraryIdFromResponse = libraries?.[0]?.libraryId ?? null;
+        if (!defaultLibraryIdFromResponse) {
           throw new Error('No libraries found.');
         }
 
-        if (!activeLibraryId) {
-          setActiveLibrary(selectedLibraryId);
+        const storeActiveLibraryIdBeforeSet = useStore.getState().activeLibraryId;
+
+        if (!hasSetDefaultLibraryRef.current && !storeActiveLibraryIdBeforeSet) {
+          setActiveLibrary(defaultLibraryIdFromResponse);
+          hasSetDefaultLibraryRef.current = true;
         }
+
+        const storeActiveLibraryIdAfterSet = useStore.getState().activeLibraryId;
+        const selectedLibraryId = storeActiveLibraryIdAfterSet ?? defaultLibraryIdFromResponse;
+
+        // TEMP[libraryId-coherence]: trace bootstrap selection vs store state (remove after Phase 11)
+        console.log('TEMP[libraryId-coherence] LibraryPage bootstrap selection', {
+          file: 'pages/LibraryPage.tsx',
+          fn: 'init',
+          activeLibraryId,
+          selectedLibraryId,
+          match: activeLibraryId === selectedLibraryId,
+          stack: new Error().stack,
+        });
+
+        // TEMP[libraryId-coherence]: trace bootstrap call args vs store state (remove after Phase 11)
+        const storeActiveLibraryIdAtBootstrapCall = useStore.getState().activeLibraryId;
+        console.log('TEMP[libraryId-coherence] LibraryPage bootstrap call', {
+          file: 'pages/LibraryPage.tsx',
+          fn: 'init',
+          bootstrapLibraryId: selectedLibraryId,
+          activeLibraryIdAtCall: storeActiveLibraryIdAtBootstrapCall,
+          match: storeActiveLibraryIdAtBootstrapCall === selectedLibraryId,
+          stack: new Error().stack,
+        });
 
         const data = await libraryApi.bootstrapLibrary(selectedLibraryId);
         setBootstrapError(null);

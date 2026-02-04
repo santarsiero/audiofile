@@ -7,6 +7,9 @@
 export { createLibrarySlice } from './librarySlice';
 export type { LibrarySlice } from './librarySlice';
 
+export { createAuthSlice } from './authSlice';
+export type { AuthSlice } from './authSlice';
+
 export { createSongsSlice, selectAllSongs, selectSongById, selectSongsByIds, selectSongCount } from './songsSlice';
 export type { SongsSlice } from './songsSlice';
 

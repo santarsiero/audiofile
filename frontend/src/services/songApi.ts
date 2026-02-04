@@ -7,7 +7,7 @@
  * This service does NOT sort or filter - that's the view layer's job.
  */
 
-import { apiClient } from './api';
+import { apiClient, isApiClientError } from './api';
 import { useStore } from '@/store';
 import type {
   GetSongsResponse,
@@ -56,11 +56,44 @@ export async function createSong(data: CreateSongRequest): Promise<Song> {
   if (!activeLibraryId) {
     throw new Error('No active library selected');
   }
-  const response = await apiClient.post<CreateSongResponse>(
-    `libraries/${activeLibraryId}/songs`,
-    data
-  );
-  return response.song;
+
+  const path = `libraries/${activeLibraryId}/songs`;
+  // TEMP[libraryId-coherence]: trace libraryId used for createSong request (remove after Phase 11)
+  console.log('TEMP[libraryId-coherence] songApi.createSong request', {
+    file: 'services/songApi.ts',
+    fn: 'createSong',
+    activeLibraryIdAtRequest: activeLibraryId,
+    requestPath: path,
+    stack: new Error().stack,
+  });
+
+  try {
+    const response = await apiClient.post<CreateSongResponse>(path, data);
+    return response.song;
+  } catch (error) {
+    // TEMP[libraryId-coherence]: log failure response details only (remove after Phase 11)
+    if (isApiClientError(error)) {
+      console.log('TEMP[libraryId-coherence] songApi.createSong failure', {
+        file: 'services/songApi.ts',
+        fn: 'createSong',
+        activeLibraryIdAtFailure: useStore.getState().activeLibraryId,
+        requestPath: path,
+        status: error.status,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+      });
+    } else {
+      console.log('TEMP[libraryId-coherence] songApi.createSong failure (non-api)', {
+        file: 'services/songApi.ts',
+        fn: 'createSong',
+        activeLibraryIdAtFailure: useStore.getState().activeLibraryId,
+        requestPath: path,
+        error,
+      });
+    }
+    throw error;
+  }
 }
 
 /**

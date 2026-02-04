@@ -11,7 +11,8 @@
  */
 
 import type { ApiError } from '@/types/api';
-import { getAccessToken } from './authTokens';
+import { clearTokens, getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from './authTokens';
+import { useStore } from '@/store';
 
 // =============================================================================
 // CONFIGURATION
@@ -30,6 +31,8 @@ const API_BASE_URL = rawApiBaseUrl.endsWith('/')
  * Default request timeout (ms)
  */
 const DEFAULT_TIMEOUT = 30000;
+
+const AUTH_REFRESH_PATH = 'auth/refresh';
 
 // =============================================================================
 // ERROR HANDLING
@@ -128,6 +131,57 @@ function createTimeoutController(timeout: number): AbortController {
   return controller;
 }
 
+async function refreshAccessToken(timeout: number): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    return false;
+  }
+
+  const url = buildUrl(AUTH_REFRESH_PATH);
+  const controller = createTimeoutController(timeout);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getDefaultHeaders(),
+      body: JSON.stringify({ refreshToken }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = await response.json();
+    const payload =
+      data && typeof data === 'object' && 'data' in data && typeof data.data === 'object'
+        ? (data.data as Record<string, unknown>)
+        : (data as Record<string, unknown>);
+
+    const newAccessToken = payload.accessToken;
+    if (typeof newAccessToken !== 'string' || !newAccessToken) {
+      return false;
+    }
+
+    setAccessToken(newAccessToken);
+
+    const newRefreshToken = payload.refreshToken;
+    if (typeof newRefreshToken === 'string' && newRefreshToken) {
+      setRefreshToken(newRefreshToken);
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function forceLogout(): void {
+  clearTokens();
+  useStore.getState().setAuthenticated(false);
+  window.location.href = '/login';
+}
+
 // =============================================================================
 // CORE REQUEST FUNCTION
 // =============================================================================
@@ -142,9 +196,10 @@ async function request<T>(
     body?: unknown;
     params?: Record<string, string>;
     timeout?: number;
+    _hasRetriedAfterRefresh?: boolean;
   }
 ): Promise<T> {
-  const { body, params, timeout = DEFAULT_TIMEOUT } = options || {};
+  const { body, params, timeout = DEFAULT_TIMEOUT, _hasRetriedAfterRefresh = false } = options || {};
   
   const url = buildUrl(path, params);
   const controller = createTimeoutController(timeout);
@@ -159,6 +214,35 @@ async function request<T>(
     
     // Handle non-OK responses
     if (!response.ok) {
+      if (
+        response.status === 401 &&
+        !_hasRetriedAfterRefresh &&
+        Boolean(getAccessToken()) &&
+        path !== AUTH_REFRESH_PATH &&
+        !path.startsWith('auth/login') &&
+        !path.startsWith('auth/register')
+      ) {
+        const refreshed = await refreshAccessToken(timeout);
+        if (!refreshed) {
+          forceLogout();
+          throw new ApiClientError('Unauthorized', 'UNAUTHORIZED', 401);
+        }
+
+        try {
+          return await request<T>(method, path, {
+            body,
+            params,
+            timeout,
+            _hasRetriedAfterRefresh: true,
+          });
+        } catch (retryError) {
+          if (retryError instanceof ApiClientError && retryError.status === 401) {
+            forceLogout();
+          }
+          throw retryError;
+        }
+      }
+
       const error = await parseErrorResponse(response);
       throw new ApiClientError(
         error.message,
