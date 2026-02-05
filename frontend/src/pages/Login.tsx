@@ -25,13 +25,11 @@ export function Login() {
     setIsSubmitting(true);
     try {
       const response = await authApi.login(email.trim(), password);
-      console.log('LOGIN RESPONSE', response);
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
       setAuthenticated(true);
       navigate('/library', { replace: true });
     } catch (err) {
-      console.error('Login failed', err);
       setAccessToken(null);
       setRefreshToken(null);
       setAuthenticated(false);

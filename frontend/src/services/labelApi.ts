@@ -68,40 +68,11 @@ export async function createLabel(data: CreateLabelRequest): Promise<Label> {
   }
 
   const path = `libraries/${activeLibraryId}/labels`;
-  // TEMP[libraryId-coherence]: trace libraryId used for createLabel request (remove after Phase 11)
-  console.log('TEMP[libraryId-coherence] labelApi.createLabel request', {
-    file: 'services/labelApi.ts',
-    fn: 'createLabel',
-    activeLibraryIdAtRequest: activeLibraryId,
-    requestPath: path,
-    stack: new Error().stack,
-  });
 
   try {
     const response = await apiClient.post<CreateLabelResponse>(path, data);
     return response.label;
   } catch (error) {
-    // TEMP[libraryId-coherence]: log failure response details only (remove after Phase 11)
-    if (isApiClientError(error)) {
-      console.log('TEMP[libraryId-coherence] labelApi.createLabel failure', {
-        file: 'services/labelApi.ts',
-        fn: 'createLabel',
-        activeLibraryIdAtFailure: useStore.getState().activeLibraryId,
-        requestPath: path,
-        status: error.status,
-        code: error.code,
-        message: error.message,
-        details: error.details,
-      });
-    } else {
-      console.log('TEMP[libraryId-coherence] labelApi.createLabel failure (non-api)', {
-        file: 'services/labelApi.ts',
-        fn: 'createLabel',
-        activeLibraryIdAtFailure: useStore.getState().activeLibraryId,
-        requestPath: path,
-        error,
-      });
-    }
     throw error;
   }
 }

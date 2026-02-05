@@ -37,15 +37,11 @@ export function Register() {
         email: email.trim(),
         password,
       });
-
-      console.log('REGISTER RESPONSE', response);
-
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
       setAuthenticated(true);
       navigate('/library', { replace: true });
     } catch (err) {
-      console.error('Registration failed', err);
       setAccessToken(null);
       setRefreshToken(null);
       setAuthenticated(false);
