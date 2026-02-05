@@ -38,6 +38,16 @@ async function register(req, res) {
       authProvider: 'local',
     });
 
+    if (process.env.NODE_ENV !== 'production') {
+      const savedUser = await User.findOne({ email: normEmail }).lean();
+      if (!savedUser) {
+        throw new Error('REGISTER_INVARIANT_FAILED: user missing after create');
+      }
+      if (typeof savedUser.passwordHash !== 'string' || !savedUser.passwordHash) {
+        throw new Error('REGISTER_INVARIANT_FAILED: passwordHash missing after create');
+      }
+    }
+
     await createDefaultLibraryForUser({ userId: user.userId });
 
     const accessToken = signAccessToken({ userId: user.userId });

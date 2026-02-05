@@ -18,7 +18,7 @@ const HomePage = () => <Navigate to="/library" replace />;
 
 function App() {
   const setAuthenticated = useStore((state) => state.setAuthenticated);
-  const isAuthenticated = Boolean(getAccessToken());
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
 
   useEffect(() => {
     setAuthenticated(Boolean(getAccessToken()));
