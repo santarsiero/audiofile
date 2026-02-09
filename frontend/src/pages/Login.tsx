@@ -10,6 +10,7 @@ export function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +41,15 @@ export function Login() {
     try {
       const response = await authApi.login(email.trim(), password);
       setAccessToken(response.accessToken);
-      setRefreshToken(response.refreshToken);
+      // DEV-ONLY (Phase 11 bridge): This Remember Me checkbox is a temporary UX-level
+      // control for local testing and early-phase clarity. It is not industry-standard.
+      // Future intent: move session persistence policy out of the UI (e.g. backend-driven
+      // token lifetimes, cookie-based auth, configurable refresh expiration).
+      if (rememberMe) {
+        setRefreshToken(response.refreshToken);
+      } else {
+        setRefreshToken(null);
+      }
       setAuthenticated(true);
       navigate('/library', { replace: true });
     } catch (err) {
@@ -81,6 +90,15 @@ export function Login() {
               autoComplete="current-password"
             />
           </div>
+          <label className="flex items-center gap-2 text-sm text-gray-300 select-none">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-gray-700 bg-gray-950 text-blue-500 focus:ring-blue-500/60"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            Remember me
+          </label>
           <button
             className="w-full rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             type="submit"
