@@ -12,7 +12,9 @@
  * - "My Library" is the only active view
  */
 
+import { useState } from 'react';
 import { useStore } from '@/store';
+import { clearTokens } from '@/services/authTokens';
 import type { LabelId } from '@/types/entities';
 
 export function Header() {
@@ -22,9 +24,51 @@ export function Header() {
   const openPanel = useStore((state) => state.openPanel);
   const activeLibraryId = useStore((state) => state.activeLibraryId);
   const canOpenCreatePanels = Boolean(activeLibraryId);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+
+  // TEMPORARY (Phase 11 bridge): Settings is not wired yet.
+  // For Phase 11, clicking Settings logs out after confirmation.
+  // Future intent: replace this handler with navigation to a real /settings page,
+  // and move Logout into that Settings UI.
+  const handleSettingsClick = () => {
+    setIsLogoutConfirmOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    clearTokens();
+    useStore.getState().setAuthenticated(false);
+    window.location.href = '/login';
+  };
 
   return (
     <header className="bg-panel-light dark:bg-panel-dark border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setIsLogoutConfirmOpen(false)}
+          />
+          <div className="relative w-full max-w-sm mx-4 rounded-xl border border-gray-800 bg-gray-900 shadow-lg p-5">
+            <div className="text-sm font-semibold text-gray-100">Log out of AudioFile?</div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                className="rounded-lg border border-gray-800 bg-transparent px-3 py-2 text-sm font-medium text-gray-200 hover:bg-gray-800/50"
+                type="button"
+                onClick={() => setIsLogoutConfirmOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white hover:bg-blue-600"
+                type="button"
+                onClick={handleConfirmLogout}
+              >
+                Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Main header row */}
       <div className="h-14 flex items-center px-4 gap-4">
         {/* Logo / App name */}
@@ -98,6 +142,7 @@ export function Header() {
 
           {/* Settings (placeholder) */}
           <button
+            onClick={handleSettingsClick}
             className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             title="Settings"
           >
