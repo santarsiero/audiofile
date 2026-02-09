@@ -2,16 +2,43 @@ import { ProviderInterface } from '../ProviderInterface.js';
 import { APPLE_MUSIC } from '../providerTypes.js';
 import { validateSearchResult } from '../contracts/validators.js';
 import { ProviderError } from '../contracts/ProviderError.js';
+import https from 'https';
+import { getAppleDeveloperToken } from '../../utils/apple/appleDeveloperToken.js';
 
-import searchValid from './fixtures/search_valid.json' assert { type: 'json' };
-import searchMissingArtwork from './fixtures/search_missing_artwork.json' assert { type: 'json' };
-import searchInvalidShape from './fixtures/search_invalid_shape.json' assert { type: 'json' };
+function requireEnv(name) {
+  const value = process.env[name];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new ProviderError({
+      providerType: APPLE_MUSIC,
+      stage: 'search',
+      reason: `Missing required env var: ${name}`,
+      raw: { envVar: name },
+    });
+  }
+  return value;
+}
 
-function pickFixture(options) {
-  const fixtureName = options?.fixtureName;
-  if (fixtureName === 'search_missing_artwork') return searchMissingArtwork;
-  if (fixtureName === 'search_invalid_shape') return searchInvalidShape;
-  return searchValid;
+function fetchJson(url, options) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, options, (res) => {
+      const chunks = [];
+
+      res.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+
+      res.on('end', () => {
+        const bodyText = Buffer.concat(chunks).toString('utf8');
+        resolve({ statusCode: res.statusCode ?? 0, bodyText });
+      });
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.end();
+  });
 }
 
 function buildArtworkUrl(artwork) {
@@ -48,18 +75,86 @@ export class AppleMusicProvider extends ProviderInterface {
     console.log('[providers.apple.search.entry]', {
       providerType: APPLE_MUSIC,
       query,
-      fixtureName: options?.fixtureName ?? 'search_valid',
+      fixtureName: options?.fixtureName ?? null,
     });
 
-    const fixture = pickFixture(options);
-    const items = fixture?.results?.songs?.data;
+    const storefront = requireEnv('APPLE_MUSIC_STOREFRONT');
+    const token = getAppleDeveloperToken();
+
+    const url = new URL(`https://api.music.apple.com/v1/catalog/${encodeURIComponent(storefront)}/search`);
+    url.searchParams.set('term', query);
+    url.searchParams.set('types', 'songs');
+    url.searchParams.set('limit', '25');
+
+    let statusCode = 0;
+    let payload;
+
+    try {
+      const response = await fetchJson(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      statusCode = response.statusCode;
+
+      if (statusCode !== 200) {
+        const err = new ProviderError({
+          providerType: APPLE_MUSIC,
+          stage: 'search',
+          reason: 'Apple Music API request failed',
+          raw: { statusCode },
+        });
+        console.error('[providers.apple.search.failure]', err.toJSON());
+        throw err;
+      }
+
+      try {
+        payload = JSON.parse(response.bodyText);
+      } catch {
+        const err = new ProviderError({
+          providerType: APPLE_MUSIC,
+          stage: 'search',
+          reason: 'Apple Music API returned malformed JSON',
+          raw: { statusCode },
+        });
+        console.error('[providers.apple.search.failure]', err.toJSON());
+        throw err;
+      }
+    } catch (err) {
+      if (err instanceof ProviderError) {
+        throw err;
+      }
+
+      const providerErr = new ProviderError({
+        providerType: APPLE_MUSIC,
+        stage: 'search',
+        reason: 'Apple Music API request failed',
+        raw: { statusCode: statusCode || undefined },
+      });
+      console.error('[providers.apple.search.failure]', providerErr.toJSON());
+      throw providerErr;
+    }
+
+    const items = payload?.results?.songs?.data;
+    if (items === undefined || items === null) {
+      console.log('[providers.apple.search.complete]', {
+        providerType: APPLE_MUSIC,
+        total: 0,
+        accepted: 0,
+        rejected: 0,
+      });
+      return [];
+    }
 
     if (!Array.isArray(items)) {
       const err = new ProviderError({
         providerType: APPLE_MUSIC,
         stage: 'search',
-        reason: 'Fixture missing expected results.songs.data array',
-        raw: { fixtureName: options?.fixtureName ?? 'search_valid' },
+        reason: 'Apple Music API response missing expected results.songs.data array',
+        raw: { statusCode },
       });
       console.error('[providers.apple.search.failure]', err.toJSON());
       throw err;
