@@ -1,0 +1,88 @@
+{
+  "results": {
+    "songs": {
+      "href": "/v1/catalog/us/search?term=phase8&types=songs&limit=25&offset=25",
+      "next": "/v1/catalog/us/search?term=phase8&types=songs&limit=25&offset=50",
+      "data": [
+        {
+          "id": "am.song.2000101",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000101",
+          "attributes": {
+            "name": "Page Two Opening",
+            "artistName": "The Phase Eights",
+            "albumName": "Block Zero",
+            "durationInMillis": 199111,
+            "isrc": "US-MCK-26-00101",
+            "contentRating": "explicit",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0101/{w}x{h}bb.jpg",
+              "width": 3000,
+              "height": 3000
+            }
+          }
+        },
+        {
+          "id": "am.song.2000102",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000102",
+          "attributes": {
+            "name": "Offset Twenty-Five",
+            "artistName": "Catalog Static",
+            "albumName": "API Shapes",
+            "durationInMillis": 181818,
+            "isrc": "US-MCK-26-00102",
+            "contentRating": "clean"
+          }
+        },
+        {
+          "id": "am.song.2000103",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000103",
+          "attributes": {
+            "name": "Continuation Token",
+            "artistName": "Mockingbird Avenue",
+            "albumName": "Fixtures Vol. 2",
+            "durationInMillis": 212121,
+            "isrc": "US-MCK-26-00103",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0103/{w}x{h}bb.jpg",
+              "width": 1600,
+              "height": 1600
+            }
+          }
+        },
+        {
+          "id": "am.song.2000104",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000104",
+          "attributes": {
+            "name": "Different IDs (Page 2)",
+            "artistName": "The Phase Eights",
+            "albumName": "Block Zero",
+            "durationInMillis": 205050,
+            "isrc": "US-MCK-26-00104"
+          }
+        },
+        {
+          "id": "am.song.2000105",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000105",
+          "attributes": {
+            "name": "Second Page Closer",
+            "artistName": "Catalog Static",
+            "albumName": "API Shapes",
+            "durationInMillis": 190000,
+            "isrc": "US-MCK-26-00105",
+            "contentRating": "explicit",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0105/{w}x{h}bb.jpg",
+              "width": 2200,
+              "height": 2200
+            }
+          }
+        }
+      ]
+    }
+  }
+}

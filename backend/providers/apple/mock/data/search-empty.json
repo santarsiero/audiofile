@@ -1,0 +1,9 @@
+{
+  "results": {
+    "songs": {
+      "href": "/v1/catalog/us/search?term=phase8-empty&types=songs&limit=25",
+      "next": null,
+      "data": []
+    }
+  }
+}

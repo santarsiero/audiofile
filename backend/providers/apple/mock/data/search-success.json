@@ -1,0 +1,220 @@
+{
+  "results": {
+    "artists": {
+      "href": "/v1/catalog/us/search?term=phase8&types=artists&limit=3",
+      "next": null,
+      "data": [
+        {
+          "id": "am.artist.1000001",
+          "type": "artists",
+          "href": "/v1/catalog/us/artists/am.artist.1000001",
+          "attributes": {
+            "name": "The Phase Eights"
+          }
+        },
+        {
+          "id": "am.artist.1000002",
+          "type": "artists",
+          "href": "/v1/catalog/us/artists/am.artist.1000002",
+          "attributes": {
+            "name": "Mockingbird Avenue"
+          }
+        },
+        {
+          "id": "am.artist.1000003",
+          "type": "artists",
+          "href": "/v1/catalog/us/artists/am.artist.1000003",
+          "attributes": {
+            "name": "Catalog Static"
+          }
+        }
+      ]
+    },
+    "songs": {
+      "href": "/v1/catalog/us/search?term=phase8&types=songs&limit=25",
+      "next": "/v1/catalog/us/search?term=phase8&types=songs&limit=25&offset=25",
+      "data": [
+        {
+          "id": "am.song.2000001",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000001",
+          "attributes": {
+            "name": "Phase Eight (Intro)",
+            "artistName": "The Phase Eights",
+            "albumName": "Block Zero",
+            "durationInMillis": 91234,
+            "isrc": "US-MCK-26-00001",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0001/{w}x{h}bb.jpg",
+              "width": 3000,
+              "height": 3000
+            }
+          }
+        },
+        {
+          "id": "am.song.2000002",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000002",
+          "attributes": {
+            "name": "Storefront Signals",
+            "artistName": "Catalog Static",
+            "albumName": "API Shapes",
+            "durationInMillis": 183456,
+            "isrc": "US-MCK-26-00002"
+          }
+        },
+        {
+          "id": "am.song.2000003",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000003",
+          "attributes": {
+            "name": "Clean Room",
+            "artistName": "Mockingbird Avenue",
+            "albumName": "Fixtures Vol. 1",
+            "durationInMillis": 204000,
+            "isrc": "US-MCK-26-00003",
+            "contentRating": "clean",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0003/{w}x{h}bb.jpg",
+              "width": 2400,
+              "height": 2400
+            }
+          }
+        },
+        {
+          "id": "am.song.2000004",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000004",
+          "attributes": {
+            "name": "Explicitly Stable",
+            "artistName": "The Phase Eights",
+            "albumName": "Block Zero",
+            "durationInMillis": 198765,
+            "isrc": "US-MCK-26-00004",
+            "contentRating": "explicit"
+          }
+        },
+        {
+          "id": "am.song.2000005",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000005",
+          "attributes": {
+            "name": "Artwork Missing (On Purpose)",
+            "artistName": "Catalog Static",
+            "albumName": "API Shapes",
+            "durationInMillis": 176000,
+            "isrc": "US-MCK-26-00005",
+            "contentRating": "explicit"
+          }
+        },
+        {
+          "id": "am.song.2000006",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000006",
+          "attributes": {
+            "name": "Pagination Dreams",
+            "artistName": "Mockingbird Avenue",
+            "albumName": "Fixtures Vol. 1",
+            "durationInMillis": 221500,
+            "isrc": "US-MCK-26-00006",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0006/{w}x{h}bb.jpg",
+              "width": 2000,
+              "height": 2000
+            }
+          }
+        },
+        {
+          "id": "am.song.2000007",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000007",
+          "attributes": {
+            "name": "Normalized Later",
+            "artistName": "The Phase Eights",
+            "albumName": "Block Zero",
+            "durationInMillis": 209000,
+            "isrc": "US-MCK-26-00007",
+            "contentRating": "clean"
+          }
+        },
+        {
+          "id": "am.song.2000008",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000008",
+          "attributes": {
+            "name": "V1 Catalog",
+            "artistName": "Catalog Static",
+            "albumName": "API Shapes",
+            "durationInMillis": 189999,
+            "isrc": "US-MCK-26-00008",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0008/{w}x{h}bb.jpg",
+              "width": 1500,
+              "height": 1500
+            }
+          }
+        },
+        {
+          "id": "am.song.2000009",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000009",
+          "attributes": {
+            "name": "Three Artists, One Query",
+            "artistName": "Mockingbird Avenue",
+            "albumName": "Fixtures Vol. 1",
+            "durationInMillis": 233333,
+            "isrc": "US-MCK-26-00009",
+            "contentRating": "explicit"
+          }
+        },
+        {
+          "id": "am.song.2000010",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000010",
+          "attributes": {
+            "name": "Stable IDs Forever",
+            "artistName": "The Phase Eights",
+            "albumName": "Block Zero",
+            "durationInMillis": 201010,
+            "isrc": "US-MCK-26-00010",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0010/{w}x{h}bb.jpg",
+              "width": 3000,
+              "height": 3000
+            }
+          }
+        },
+        {
+          "id": "am.song.2000011",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000011",
+          "attributes": {
+            "name": "Error-Free (Mostly)",
+            "artistName": "Catalog Static",
+            "albumName": "API Shapes",
+            "durationInMillis": 195000,
+            "isrc": "US-MCK-26-00011",
+            "contentRating": "clean"
+          }
+        },
+        {
+          "id": "am.song.2000012",
+          "type": "songs",
+          "href": "/v1/catalog/us/songs/am.song.2000012",
+          "attributes": {
+            "name": "Last Track In Page",
+            "artistName": "Mockingbird Avenue",
+            "albumName": "Fixtures Vol. 1",
+            "durationInMillis": 210500,
+            "isrc": "US-MCK-26-00012",
+            "artwork": {
+              "url": "https://is1-ssl.mzstatic.com/image/thumb/Music126/v4/aa/bb/cc/aabbccdd-0012/{w}x{h}bb.jpg",
+              "width": 1200,
+              "height": 1200
+            }
+          }
+        }
+      ]
+    }
+  }
+}

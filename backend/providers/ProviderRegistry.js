@@ -11,8 +11,15 @@ export class ProviderRegistry {
     if (this._defaultsRegistered) return;
 
     if (!this._providers.has(APPLE_MUSIC)) {
-      const { AppleMusicProvider } = await import('./apple/AppleMusicProvider.js');
-      this._providers.set(APPLE_MUSIC, new AppleMusicProvider());
+      const mode = process.env.APPLE_PROVIDER_MODE === 'mock' ? 'mock' : 'real';
+
+      if (mode === 'mock') {
+        const { MockAppleMusicProvider } = await import('./apple/mock/MockAppleMusicProvider.js');
+        this._providers.set(APPLE_MUSIC, new MockAppleMusicProvider());
+      } else {
+        const { AppleMusicProvider } = await import('./apple/AppleMusicProvider.js');
+        this._providers.set(APPLE_MUSIC, new AppleMusicProvider());
+      }
     }
 
     this._defaultsRegistered = true;

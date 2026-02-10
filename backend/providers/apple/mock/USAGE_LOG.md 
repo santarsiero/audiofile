@@ -1,0 +1,32 @@
+# Mock Apple Music Usage Log
+
+This file tracks all usage of mock Apple Music infrastructure.
+
+Rules:
+- Append-only
+- One entry per change
+- Each entry must include:
+  - File path
+  - Responsibility
+  - Phase / Block
+  - Env flag
+  - Revert instruction
+
+## 2026-02-10 — Phase 8 / Block 0 — Apple Catalog search fixtures
+- File path: backend/providers/apple/mock/data/search-success.json
+- File path: backend/providers/apple/mock/data/search-empty.json
+- File path: backend/providers/apple/mock/data/search-error.json
+- File path: backend/providers/apple/mock/data/pagination-page-2.json
+- Responsibility: Populate Apple-shaped mock Apple Music Catalog search payloads for Phase 8 verification.
+- Phase / Block: Phase 8 / Block 0
+- Env flag: APPLE_PROVIDER_MODE=mock
+- Revert instruction: Delete the four JSON fixture files above (or reset `backend/providers/apple/mock/data/` to its previous state).
+
+## 2026-02-10 — Phase 8 / Block 0 — Mock provider + gating
+- File path: backend/providers/apple/mock/MockAppleMusicProvider.js
+- File path: backend/providers/apple/mock/MockAppleMusicProvider.ts
+- File path: backend/providers/ProviderRegistry.js
+- Responsibility: Implement a MockAppleMusicProvider (raw Apple-shaped fixture payloads) and gate provider selection strictly by APPLE_PROVIDER_MODE.
+- Phase / Block: Phase 8 / Block 0
+- Env flag: APPLE_PROVIDER_MODE=mock
+- Revert instruction: Set APPLE_PROVIDER_MODE=real; mock provider will no longer be used. No code removal required.

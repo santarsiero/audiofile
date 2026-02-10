@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "id": "am.error.3000001",
+      "status": "401",
+      "code": "NOT_AUTHORIZED",
+      "title": "Not Authorized",
+      "detail": "The provided developer token is missing, expired, or invalid."
+    }
+  ]
+}
