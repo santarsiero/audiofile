@@ -13,6 +13,9 @@
  * - Labels/superlabels are NOT displayed directly on song cards (intentional minimalism)
  */
 
+import type { MouseEvent as ReactMouseEvent } from 'react';
+
+import { usePlayback } from '@/context/playback';
 import type { HydratedSongCanvasItem } from '@/types/canvas';
 
 interface SongCardProps {
@@ -20,15 +23,26 @@ interface SongCardProps {
 }
 
 export function SongCard({ item }: SongCardProps) {
+  const { state, play } = usePlayback();
   const song = item.entity;
 
   const primaryText = song.nickname || song.displayTitle;
   const secondaryText = song.displayArtist;
 
+  const isActive = state.currentSongId === song.songId;
+  const isPlaying = isActive && state.status === 'playing';
+
+  const handleDoubleClick = (event: ReactMouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+    play(song.songId);
+  };
+
   return (
     <div
+      onDoubleClick={handleDoubleClick}
       className={`
         song-card w-[180px] h-[220px] p-3 cursor-pointer
+        ${isActive ? 'ring-2 ring-blue-500 bg-blue-500/5' : ''}
         ${item.isSelected ? 'selected' : ''}
       `}
     >
@@ -53,7 +67,14 @@ export function SongCard({ item }: SongCardProps) {
       {/* Song info */}
       <div className="space-y-0.5">
         <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate" title={primaryText}>
-          {primaryText}
+          <span className="inline-flex items-center gap-2">
+            {isPlaying ? (
+              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                Playing
+              </span>
+            ) : null}
+            {primaryText}
+          </span>
         </h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={secondaryText}>
           {secondaryText}

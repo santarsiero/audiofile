@@ -30,3 +30,11 @@ Rules:
 - Phase / Block: Phase 8 / Block 0
 - Env flag: APPLE_PROVIDER_MODE=mock
 - Revert instruction: Set APPLE_PROVIDER_MODE=real; mock provider will no longer be used. No code removal required.
+
+## 2026-02-10 — Phase 9 / Block 9.5 — Frontend mock playback engine wiring
+- File path: frontend/src/playback/mock/MockPlaybackEngine.ts
+- File path: frontend/src/context/playback/PlaybackContext.tsx
+- Responsibility: Mock playback wiring (discrete-only state transitions) gated by PLAYBACK_MODE=mock to validate playback state flow + UI reactions without audio, timers, or MusicKit.
+- Phase / Block: Phase 9 / Block 9.5
+- Env flag: PLAYBACK_MODE=mock
+- Revert instruction: Delete `frontend/src/playback/mock/MockPlaybackEngine.ts` and remove the PLAYBACK_MODE mock engine delegation from `frontend/src/context/playback/PlaybackContext.tsx` (restore direct dispatch or replace with real MusicKit engine in Block 9.7).

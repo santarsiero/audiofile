@@ -16,3 +16,6 @@ export * from './api';
 
 // View state types (frontend-only state)
 export * from './state';
+
+// Playback domain types (Phase 9)
+export * from './playback';
