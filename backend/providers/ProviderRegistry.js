@@ -1,4 +1,4 @@
-import { APPLE_MUSIC } from './providerTypes.js';
+import { APPLE_MUSIC, SPOTIFY } from './providerTypes.js';
 import { ProviderError } from './contracts/ProviderError.js';
 
 export class ProviderRegistry {
@@ -19,6 +19,22 @@ export class ProviderRegistry {
       } else {
         const { AppleMusicProvider } = await import('./apple/AppleMusicProvider.js');
         this._providers.set(APPLE_MUSIC, new AppleMusicProvider());
+      }
+    }
+
+    // Spotify auto-registers only when credentials exist; provider availability is environment-driven to avoid resolution failures.
+    if (!this._providers.has(SPOTIFY)) {
+      const clientId = process.env.SPOTIFY_CLIENT_ID;
+      const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+      if (
+        typeof clientId === 'string' &&
+        clientId.trim().length > 0 &&
+        typeof clientSecret === 'string' &&
+        clientSecret.trim().length > 0
+      ) {
+        const { SpotifyProvider } = await import('./spotify/SpotifyProvider.js');
+        this._providers.set(SPOTIFY, new SpotifyProvider());
       }
     }
 

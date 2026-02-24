@@ -35,6 +35,25 @@ export class SpotifyProvider extends ProviderInterface {
     return SPOTIFY;
   }
 
+  _normalizeTrack(track) {
+    const album = track?.album?.name;
+    const artwork = track?.album?.images?.[0]?.url;
+    const durationMs = track?.duration_ms;
+
+    return {
+      title: track?.name,
+      artist: track?.artists?.[0]?.name || '',
+      providerTrackId: track?.id,
+      providerType: SPOTIFY,
+      ...(typeof album === 'string' && album.trim().length > 0 ? { album } : {}),
+      ...(typeof artwork === 'string' && artwork.trim().length > 0 ? { artwork } : {}),
+      ...(typeof durationMs === 'number' && Number.isFinite(durationMs) && durationMs > 0
+        ? { durationMs }
+        : {}),
+      raw: track,
+    };
+  }
+
   async search(query, options = {}) {
     if (typeof query !== 'string' || query.trim().length === 0) {
       throw new ProviderError({
@@ -50,7 +69,7 @@ export class SpotifyProvider extends ProviderInterface {
     const url = new URL('https://api.spotify.com/v1/search');
     url.searchParams.set('q', query);
     url.searchParams.set('type', 'track');
-    url.searchParams.set('limit', '25');
+    url.searchParams.set('limit', '10');
 
     let res;
     try {
@@ -97,20 +116,81 @@ export class SpotifyProvider extends ProviderInterface {
     }
 
     const items = Array.isArray(payload?.tracks?.items) ? payload.tracks.items : [];
-    const results = items.map((track) => {
-      return {
-        title: track?.name,
-        artist: track?.artists?.[0]?.name || '',
-        providerTrackId: track?.id,
-        providerType: SPOTIFY,
-        album: track?.album?.name || null,
-        artwork: track?.album?.images?.[0]?.url || null,
-        durationMs: track?.duration_ms,
-        raw: track,
-      };
-    });
+    const results = items.map((track) => this._normalizeTrack(track));
 
     return results;
+  }
+
+  async import(trackId, options = {}) {
+    if (typeof trackId !== 'string' || trackId.trim().length === 0) {
+      throw new ProviderError({
+        providerType: SPOTIFY,
+        stage: 'input',
+        reason: 'Missing required trackId',
+        raw: { trackId: trackId ?? null },
+      });
+    }
+
+    const accessToken = await this._getAccessToken();
+    const id = trackId.trim();
+    const url = `https://api.spotify.com/v1/tracks/${encodeURIComponent(id)}`;
+
+    let res;
+    try {
+      res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/json',
+        },
+      });
+    } catch (err) {
+      throw new ProviderError({
+        providerType: SPOTIFY,
+        stage: 'network',
+        reason: 'Spotify track request failed',
+        raw: { message: err?.message },
+      });
+    }
+
+    let payload;
+    try {
+      payload = await res.json();
+    } catch {
+      payload = null;
+    }
+
+    if (!res.ok) {
+      const spotifyMessage =
+        payload && typeof payload === 'object'
+          ? payload?.error?.message ?? payload?.error_description ?? payload?.error
+          : undefined;
+
+      const stage =
+        res.status === 401 || res.status === 403
+          ? 'auth'
+          : res.status === 404
+            ? 'network'
+            : 'provider';
+
+      throw new ProviderError({
+        providerType: SPOTIFY,
+        stage,
+        reason:
+          stage === 'auth'
+            ? 'Spotify track unauthorized'
+            : stage === 'network'
+              ? 'Spotify track not found'
+              : 'Spotify track request rejected',
+        raw: {
+          status: res.status,
+          spotifyMessage,
+          trackId: id,
+        },
+      });
+    }
+
+    return this._normalizeTrack(payload);
   }
 
   async _getAccessToken() {

@@ -6,11 +6,13 @@
 import express from 'express';
 import Library from '../models/Library.js';
 import { getBootstrap } from '../services/LibraryBootstrapService.js';
+import { importSingleTrack } from '../services/ProviderIngestionService.js';
 import songsRouter from './songs.js'; 
 import labelsRouter from './labels.js'; 
 import taggingRouter from './tagging.js';
 import filterRouter from './filter.js';
 import modesRouter from './modes.js'; 
+import { ProviderError } from '../providers/contracts/ProviderError.js';
 
 const router = express.Router();
 
@@ -84,6 +86,40 @@ router.get('/:libraryId/bootstrap', async (req, res) => {
     // Handle all other errors as 500
     console.error('Bootstrap error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/:libraryId/providers/import', async (req, res) => {
+  try {
+    const { libraryId } = req.params;
+    const { providerType, providerTrackId, starterLabelIds } = req.body || {};
+
+    const providerTypeOk = typeof providerType === 'string' && providerType.trim().length > 0;
+    const providerTrackIdOk = typeof providerTrackId === 'string' && providerTrackId.trim().length > 0;
+    const starterLabelIdsOk = starterLabelIds === undefined || Array.isArray(starterLabelIds);
+
+    if (!providerTypeOk || !providerTrackIdOk || !starterLabelIdsOk) {
+      return res.status(400).json({ error: 'Invalid request body' });
+    }
+
+    const result = await importSingleTrack({
+      libraryId,
+      providerType,
+      providerTrackId,
+      starterLabelIds,
+    });
+
+    return res.status(201).json(result);
+  } catch (error) {
+    if (error instanceof ProviderError) {
+      return res.status(400).json({ error: error.toJSON() });
+    }
+
+    if (typeof error?.status === 'number') {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: error?.message || 'Internal server error' });
   }
 });
 
