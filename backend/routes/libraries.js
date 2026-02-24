@@ -7,6 +7,7 @@ import express from 'express';
 import Library from '../models/Library.js';
 import { getBootstrap } from '../services/LibraryBootstrapService.js';
 import { importSingleTrack } from '../services/ProviderIngestionService.js';
+import { bulkImportSongs } from '../services/BulkIngestionService.js';
 import songsRouter from './songs.js'; 
 import labelsRouter from './labels.js'; 
 import taggingRouter from './tagging.js';
@@ -110,6 +111,40 @@ router.post('/:libraryId/providers/import', async (req, res) => {
     });
 
     return res.status(201).json(result);
+  } catch (error) {
+    if (error instanceof ProviderError) {
+      return res.status(400).json({ error: error.toJSON() });
+    }
+
+    if (typeof error?.status === 'number') {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: error?.message || 'Internal server error' });
+  }
+});
+
+router.post('/:libraryId/providers/bulk-import', async (req, res) => {
+  try {
+    const { libraryId } = req.params;
+    const { providerType, items, applyLabelIds } = req.body || {};
+
+    const providerTypeOk = typeof providerType === 'string' && providerType.trim().length > 0;
+    const itemsOk = Array.isArray(items) && items.length > 0;
+    const applyLabelIdsOk = applyLabelIds === undefined || Array.isArray(applyLabelIds);
+
+    if (!providerTypeOk || !itemsOk || !applyLabelIdsOk) {
+      return res.status(400).json({ error: 'Invalid request body' });
+    }
+
+    const result = await bulkImportSongs({
+      libraryId,
+      providerType,
+      items,
+      applyLabelIds,
+    });
+
+    return res.status(200).json(result);
   } catch (error) {
     if (error instanceof ProviderError) {
       return res.status(400).json({ error: error.toJSON() });
