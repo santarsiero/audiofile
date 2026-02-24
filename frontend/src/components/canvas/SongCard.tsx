@@ -83,3 +83,4 @@ export function SongCard({ item }: SongCardProps) {
     </div>
   );
 }
+
