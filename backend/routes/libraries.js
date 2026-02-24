@@ -8,6 +8,7 @@ import Library from '../models/Library.js';
 import { getBootstrap } from '../services/LibraryBootstrapService.js';
 import { importSingleTrack } from '../services/ProviderIngestionService.js';
 import { bulkImportSongs } from '../services/BulkIngestionService.js';
+import { bulkImportLabels } from '../services/BulkLabelService.js';
 import songsRouter from './songs.js'; 
 import labelsRouter from './labels.js'; 
 import taggingRouter from './tagging.js';
@@ -150,6 +151,31 @@ router.post('/:libraryId/providers/bulk-import', async (req, res) => {
       return res.status(400).json({ error: error.toJSON() });
     }
 
+    if (typeof error?.status === 'number') {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: error?.message || 'Internal server error' });
+  }
+});
+
+router.post('/:libraryId/labels/bulk-import', async (req, res) => {
+  try {
+    const { libraryId } = req.params;
+    const { items } = req.body || {};
+
+    const itemsOk = Array.isArray(items) && items.length > 0;
+    if (!itemsOk) {
+      return res.status(400).json({ error: 'Invalid request body' });
+    }
+
+    const result = await bulkImportLabels({
+      libraryId,
+      items,
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
     if (typeof error?.status === 'number') {
       return res.status(error.status).json({ error: error.message });
     }

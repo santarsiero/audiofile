@@ -64,6 +64,8 @@ export async function createRegularLabel(libraryId, payload) {
     labelId,
     name: name.trim(),
     type: 'REGULAR',
+    ...(payload.description !== undefined && { description: payload.description }),
+    ...(payload.metadata !== undefined && { metadata: payload.metadata }),
   };
 
   try {
