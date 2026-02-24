@@ -101,6 +101,7 @@ export async function importSingleTrack({
     const createdSong = await createSong(libraryId.trim(), {
       displayTitle: title,
       displayArtist: artist,
+      albumArtUrl: typeof meta?.artwork === 'string' ? meta.artwork : null,
     });
 
     created = true;

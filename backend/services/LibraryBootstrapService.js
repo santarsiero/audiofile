@@ -15,6 +15,21 @@ import SuperLabelComponent from '../models/SuperLabelComponent.js';
 import LabelMode from '../models/LabelMode.js';
 import LabelModeLabel from '../models/LabelModeLabel.js';
 
+function normalizeSongForResponse(song) {
+  if (!song) return song;
+
+  if (
+    (song.albumArtUrl === undefined || song.albumArtUrl === null || song.albumArtUrl === '') &&
+    song.metadata &&
+    typeof song.metadata.albumArtUrl === 'string' &&
+    song.metadata.albumArtUrl.trim().length > 0
+  ) {
+    return { ...song, albumArtUrl: song.metadata.albumArtUrl.trim() };
+  }
+
+  return song;
+}
+
 /**
  * Get all data needed to bootstrap a library
  * 
@@ -52,7 +67,7 @@ export async function getBootstrap(libraryId) {
   // Step 3: Return bootstrap object
   return {
     library,
-    songs,
+    songs: songs.map(normalizeSongForResponse),
     labels,
     songLabels,
     superLabelComponents,

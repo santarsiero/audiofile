@@ -13,7 +13,7 @@
  * - Labels/superlabels are NOT displayed directly on song cards (intentional minimalism)
  */
 
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { usePlayback } from '@/context/playback';
 import type { HydratedSongCanvasItem } from '@/types/canvas';
@@ -25,6 +25,12 @@ interface SongCardProps {
 export function SongCard({ item }: SongCardProps) {
   const { state, play } = usePlayback();
   const song = item.entity;
+
+  const [hasArtError, setHasArtError] = useState(false);
+
+  useEffect(() => {
+    setHasArtError(false);
+  }, [song.albumArtUrl]);
 
   const primaryText = song.nickname || song.displayTitle;
   const secondaryText = song.displayArtist;
@@ -48,12 +54,13 @@ export function SongCard({ item }: SongCardProps) {
     >
       {/* Album artwork */}
       <div className="w-full aspect-square mb-3 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
-        {song.albumArtUrl ? (
+        {song.albumArtUrl && !hasArtError ? (
           <img
             src={song.albumArtUrl}
             alt={`${primaryText} album art`}
             className="w-full h-full object-cover"
             loading="lazy"
+            onError={() => setHasArtError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">

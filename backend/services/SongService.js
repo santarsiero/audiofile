@@ -10,6 +10,21 @@ import Song from '../models/Song.js';
 import SongLabel from '../models/SongLabel.js';
 import SongSource from '../models/SongSource.js';
 
+function normalizeSongForResponse(song) {
+  if (!song) return song;
+
+  if (
+    (song.albumArtUrl === undefined || song.albumArtUrl === null || song.albumArtUrl === '') &&
+    song.metadata &&
+    typeof song.metadata.albumArtUrl === 'string' &&
+    song.metadata.albumArtUrl.trim().length > 0
+  ) {
+    return { ...song, albumArtUrl: song.metadata.albumArtUrl.trim() };
+  }
+
+  return song;
+}
+
 function makeId(prefix) {
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
   return `${prefix}_${id}`;
@@ -24,7 +39,7 @@ function makeId(prefix) {
  * @throws {Error} 409 if duplicate (normKey conflict)
  */
 export async function createSong(libraryId, payload) {
-  const { displayTitle, displayArtist, ...metadata } = payload;
+  const { displayTitle, displayArtist, albumArtUrl, ...metadata } = payload;
 
   // Validate required fields
   if (!displayTitle || typeof displayTitle !== 'string' || !displayTitle.trim()) {
@@ -46,12 +61,17 @@ export async function createSong(libraryId, payload) {
     songId,
     displayTitle: displayTitle.trim(),
     displayArtist: displayArtist.trim(),
+    ...(typeof albumArtUrl === 'string' && albumArtUrl.trim().length > 0
+      ? { albumArtUrl: albumArtUrl.trim() }
+      : typeof metadata.albumArtUrl === 'string' && metadata.albumArtUrl.trim().length > 0
+        ? { albumArtUrl: metadata.albumArtUrl.trim() }
+        : {}),
     metadata: metadata || {},
   };
 
   try {
     const song = await Song.create(songData);
-    return song.toObject();
+    return normalizeSongForResponse(song.toObject());
   } catch (error) {
     // Detect duplicate key error (E11000)
     if (error.code === 11000) {
@@ -71,7 +91,7 @@ export async function createSong(libraryId, payload) {
  */
 export async function getAllSongs(libraryId) {
   const songs = await Song.find({ libraryId }).lean();
-  return songs;
+  return songs.map(normalizeSongForResponse);
 }
 
 /**
@@ -91,7 +111,7 @@ export async function getSongById(libraryId, songId) {
     throw error;
   }
 
-  return song;
+  return normalizeSongForResponse(song);
 }
 
 /**

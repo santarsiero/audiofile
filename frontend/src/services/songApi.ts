@@ -7,7 +7,7 @@
  * This service does NOT sort or filter - that's the view layer's job.
  */
 
-import { apiClient, isApiClientError } from './api';
+import { apiClient } from './api';
 import { useStore } from '@/store';
 import type {
   GetSongsResponse,

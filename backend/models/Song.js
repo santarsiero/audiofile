@@ -75,6 +75,11 @@ const songSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    albumArtUrl: {
+      type: String,
+      default: null,
+      trim: true,
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
