@@ -45,57 +45,65 @@ export function FloatingControls() {
   const zoomPercentage = Math.round(viewport.zoom * 100);
 
   return (
-    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-      {/* Zoom controls */}
-      <div className="bg-panel-light dark:bg-panel-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1">
+    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+      <div className="flex flex-col bg-neutral-850 rounded-af-lg shadow-af-float border border-neutral-750 overflow-hidden">
+        {/* Zoom in */}
         <button
           onClick={zoomIn}
-          className="block w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+          className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-colors duration-af-fast"
           title="Zoom in"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
         </button>
-        
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400 py-1">
+
+        {/* Zoom percentage */}
+        <div className="text-center text-af-xs text-neutral-600 py-0.5 tabular-nums">
           {zoomPercentage}%
         </div>
-        
+
+        {/* Zoom out */}
         <button
           onClick={zoomOut}
-          className="block w-8 h-8 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+          className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-colors duration-af-fast"
           title="Zoom out"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
           </svg>
         </button>
-      </div>
 
-      {/* Recenter button */}
-      <button
-        onClick={handleRecenter}
-        className="w-8 h-8 flex items-center justify-center bg-panel-light dark:bg-panel-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-        title="Recenter canvas"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-        </svg>
-      </button>
+        {/* Divider */}
+        <div className="mx-1.5 border-t border-neutral-750" />
 
-      {/* Undo button (only if enabled) */}
-      {enableUndoCopyPaste && (
+        {/* Recenter */}
         <button
-          onClick={handleUndo}
-          className="w-8 h-8 flex items-center justify-center bg-panel-light dark:bg-panel-dark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-          title="Undo (Ctrl+Z)"
+          onClick={handleRecenter}
+          className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-colors duration-af-fast"
+          title="Recenter canvas"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
           </svg>
         </button>
-      )}
+
+        {/* Undo (only if enabled) */}
+        {enableUndoCopyPaste && (
+          <>
+            <div className="mx-1.5 border-t border-neutral-750" />
+            <button
+              onClick={handleUndo}
+              className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 transition-colors duration-af-fast"
+              title="Undo (Ctrl+Z)"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
