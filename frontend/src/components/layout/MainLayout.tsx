@@ -50,7 +50,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <button
               type="button"
               aria-label="Open songs panel"
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-30 h-24 w-3 bg-gray-200/90 dark:bg-gray-800/80 hover:bg-gray-300/90 dark:hover:bg-gray-700/80 rounded-r"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-30 h-24 w-3 bg-neutral-800/80 hover:bg-neutral-700/80 rounded-r transition-colors duration-af-fast"
               onClick={() => openPanel('left', 'song-list')}
             />
           )}
@@ -59,7 +59,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <button
               type="button"
               aria-label="Open labels panel"
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-30 h-24 w-3 bg-gray-200/90 dark:bg-gray-800/80 hover:bg-gray-300/90 dark:hover:bg-gray-700/80 rounded-l"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-30 h-24 w-3 bg-neutral-800/80 hover:bg-neutral-700/80 rounded-l transition-colors duration-af-fast"
               onClick={() => openPanel('right', 'label-list')}
             />
           )}

@@ -14,13 +14,13 @@ export function LeftPanel() {
   const [isBulkSongImportOpen, setIsBulkSongImportOpen] = useState(false);
 
   return (
-    <aside className="w-80 h-full min-h-0 flex flex-col bg-panel-light dark:bg-panel-dark border-r border-gray-200 dark:border-gray-800">
+    <aside className="w-80 h-full min-h-0 flex flex-col bg-surface-panel border-r border-neutral-750">
       {/* Sticky panel header */}
-      <div className="h-12 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-panel-light/95 dark:bg-panel-dark/95">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Library Controls</h2>
+      <div className="h-12 flex items-center justify-between px-4 border-b border-neutral-750 bg-surface-panel">
+        <h2 className="text-sm font-semibold text-neutral-200">Songs</h2>
         <button
           onClick={() => closePanel('left')}
-          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded"
+          className="p-1 text-neutral-500 hover:text-neutral-300 rounded-af-sm transition-colors duration-af-fast"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -39,7 +39,7 @@ export function LeftPanel() {
           <button
             type="button"
             onClick={() => setIsBulkSongImportOpen(true)}
-            className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900"
+            className="w-full px-3 py-2 text-sm rounded-af-md border border-neutral-750 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors duration-af-fast"
           >
             Bulk Import Songs
           </button>
@@ -63,11 +63,11 @@ export function LeftPanel() {
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string | null }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <p className="text-af-label uppercase tracking-widest text-neutral-600">
         {title}
       </p>
       {subtitle && (
-        <p className="text-sm text-gray-600 dark:text-gray-300">{subtitle}</p>
+        <p className="text-af-small text-neutral-400 mt-0.5">{subtitle}</p>
       )}
     </div>
   );
@@ -186,16 +186,16 @@ function SongInfo() {
 
   if (!songId) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-        <p className="text-sm">No song selected</p>
+      <div className="rounded-af-md border border-dashed border-neutral-750 bg-neutral-900/30 py-6 text-center text-neutral-600">
+        <p className="text-af-small">No song selected</p>
       </div>
     );
   }
 
   if (!song) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-        <p className="text-sm">Song not found</p>
+      <div className="rounded-af-md border border-dashed border-neutral-750 bg-neutral-900/30 py-6 text-center text-neutral-600">
+        <p className="text-af-small">Song not found</p>
       </div>
     );
   }
@@ -211,7 +211,7 @@ function SongInfo() {
       <div
         draggable
         onDragStart={handleAlbumArtDragStart}
-        className="w-[120px] h-[120px] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 cursor-grab active:cursor-grabbing"
+        className="w-[120px] h-[120px] rounded-af-lg overflow-hidden border border-neutral-750 bg-surface-element cursor-grab active:cursor-grabbing"
         title="Drag to canvas"
       >
         {song.albumArtUrl ? (
@@ -227,30 +227,30 @@ function SongInfo() {
         )}
       </div>
 
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={song.nickname || song.displayTitle}>
+      <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3">
+        <p className="text-af-body font-semibold text-neutral-100 truncate" title={song.nickname || song.displayTitle}>
           {song.nickname || song.displayTitle}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={song.displayArtist}>
+        <p className="text-af-xs text-neutral-500 truncate" title={song.displayArtist}>
           {song.displayArtist}
         </p>
       </div>
 
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3 space-y-2">
+        <p className="text-af-label uppercase tracking-widest text-neutral-600">
           Labels
         </p>
         <div className="flex flex-wrap gap-1.5">
           {(songId ? (labelsBySongId[songId as SongId] ?? []) : []).map((labelId) => (
             <span
               key={labelId}
-              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full"
+              className="px-2 py-0.5 text-af-xs bg-neutral-750 text-neutral-200 rounded-af-pill border border-neutral-700"
             >
               {labelsById[labelId as LabelId]?.name ?? labelId}
             </span>
           ))}
           {songId && (labelsBySongId[songId as SongId] ?? []).length === 0 && (
-            <span className="text-sm text-gray-500 dark:text-gray-400">No labels</span>
+            <span className="text-af-small text-neutral-600">No labels</span>
           )}
         </div>
       </div>
@@ -319,8 +319,8 @@ function SongsOnCanvasList() {
 
   if (songsOnCanvas.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-        <p className="text-sm">No songs on canvas</p>
+      <div className="rounded-af-md border border-dashed border-neutral-750 bg-neutral-900/30 py-6 text-center text-neutral-600">
+        <p className="text-af-small">No songs on canvas</p>
       </div>
     );
   }
@@ -336,14 +336,19 @@ function SongsOnCanvasList() {
             onDragStart={(event) => handleDragStart(event, song.songId)}
             onClick={() => handleSingleClick(song.songId)}
             onDoubleClick={() => handleDoubleClick(song.songId)}
-            className="cursor-pointer rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900"
+            className="cursor-pointer flex items-center gap-3 rounded-af-md border border-neutral-750 bg-surface-element px-3 py-2 hover:bg-neutral-800 transition-colors duration-af-fast"
             title={title}
           >
-            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {title}
+            <div className="w-9 h-9 flex-shrink-0 rounded-af-sm overflow-hidden bg-neutral-800">
+              {song.albumArtUrl ? (
+                <img src={song.albumArtUrl} alt="" className="w-full h-full object-cover" draggable={false} loading="lazy" />
+              ) : (
+                <div className="w-full h-full" />
+              )}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {song.officialArtist ?? song.displayArtist}
+            <div className="min-w-0 flex-1">
+              <div className="text-af-body font-medium text-neutral-100 truncate">{title}</div>
+              <div className="text-af-xs text-neutral-500 truncate">{song.officialArtist ?? song.displayArtist}</div>
             </div>
           </div>
         );
@@ -388,17 +393,17 @@ function SearchResultsPlaceholder() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search songs in your library…"
-          className="w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+          className="w-full h-9 px-3 text-sm bg-neutral-800 border border-neutral-750 rounded-af-md text-neutral-100 placeholder:text-neutral-600 focus:ring-1 focus:ring-neutral-600 focus:outline-none"
         />
       </div>
 
       {normalizedQuery.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-          <p className="text-sm">Type to search your library songs</p>
+        <div className="rounded-af-md border border-dashed border-neutral-750 bg-neutral-900/30 py-6 text-center text-neutral-600">
+          <p className="text-af-small">Type to search your library songs</p>
         </div>
       ) : results.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-          <p className="text-sm">No matches found</p>
+        <div className="rounded-af-md border border-dashed border-neutral-750 bg-neutral-900/30 py-6 text-center text-neutral-600">
+          <p className="text-af-small">No matches found</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -409,14 +414,19 @@ function SearchResultsPlaceholder() {
               <div
                 key={song.songId}
                 onClick={() => openPanel('left', 'song-info', song.songId)}
-                className="cursor-pointer rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900"
+                className="cursor-pointer flex items-center gap-3 rounded-af-md border border-neutral-750 bg-surface-element px-3 py-2 hover:bg-neutral-800 transition-colors duration-af-fast"
                 title={title}
               >
-                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {title}
+                <div className="w-9 h-9 flex-shrink-0 rounded-af-sm overflow-hidden bg-neutral-800">
+                  {song.albumArtUrl ? (
+                    <img src={song.albumArtUrl} alt="" className="w-full h-full object-cover" draggable={false} loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full" />
+                  )}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  {subtitle}
+                <div className="min-w-0 flex-1">
+                  <div className="text-af-body font-medium text-neutral-100 truncate">{title}</div>
+                  <div className="text-af-xs text-neutral-500 truncate">{subtitle}</div>
                 </div>
               </div>
             );
@@ -614,14 +624,14 @@ function AddSongForm() {
 
   return (
     <div className="space-y-3">
-      <div className="inline-flex w-full rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <div className="inline-flex w-full rounded-af-md border border-neutral-750 overflow-hidden">
         <button
           type="button"
           onClick={() => setMode('manual')}
-          className={`flex-1 px-3 py-2 text-sm ${
+          className={`flex-1 px-3 py-2 text-sm transition-colors duration-af-fast ${
             mode === 'manual'
-              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-              : 'bg-white/80 dark:bg-gray-900/40 text-gray-600 dark:text-gray-300'
+              ? 'bg-neutral-750 text-neutral-100'
+              : 'bg-surface-element text-neutral-500 hover:text-neutral-300'
           }`}
         >
           Manual
@@ -629,10 +639,10 @@ function AddSongForm() {
         <button
           type="button"
           onClick={() => setMode('provider')}
-          className={`flex-1 px-3 py-2 text-sm ${
+          className={`flex-1 px-3 py-2 text-sm transition-colors duration-af-fast ${
             mode === 'provider'
-              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-              : 'bg-white/80 dark:bg-gray-900/40 text-gray-600 dark:text-gray-300'
+              ? 'bg-neutral-750 text-neutral-100'
+              : 'bg-surface-element text-neutral-500 hover:text-neutral-300'
           }`}
         >
           Provider
@@ -642,29 +652,29 @@ function AddSongForm() {
       {mode === 'manual' ? (
         <form onSubmit={(event) => void handleSubmit(event)} className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <label className="block text-af-label uppercase tracking-widest text-neutral-600">
               Title
             </label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+              className="mt-1 w-full h-9 px-3 text-sm bg-neutral-800 border border-neutral-750 rounded-af-md text-neutral-100 placeholder:text-neutral-600 focus:ring-1 focus:ring-neutral-600 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <label className="block text-af-label uppercase tracking-widest text-neutral-600">
               Artist
             </label>
             <input
               value={artist}
               onChange={(e) => setArtist(e.target.value)}
-              className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+              className="mt-1 w-full h-9 px-3 text-sm bg-neutral-800 border border-neutral-750 rounded-af-md text-neutral-100 placeholder:text-neutral-600 focus:ring-1 focus:ring-neutral-600 focus:outline-none"
             />
           </div>
           <button
             type="submit"
             disabled={isSubmitting || !title.trim() || !artist.trim()}
-            className="w-full px-3 py-2 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+            className="w-full px-3 py-2 text-sm rounded-af-md bg-neutral-100 text-neutral-950 font-medium hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-af-fast"
           >
             Create
           </button>
@@ -675,27 +685,27 @@ function AddSongForm() {
             value={providerQuery}
             onChange={(e) => setProviderQuery(e.target.value)}
             placeholder="Search Spotify tracks…"
-            className="w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+            className="w-full h-9 px-3 text-sm bg-neutral-800 border border-neutral-750 rounded-af-md text-neutral-100 placeholder:text-neutral-600 focus:ring-1 focus:ring-neutral-600 focus:outline-none"
           />
 
           {isSearchingProviders ? (
-            <div className="text-xs text-gray-500 dark:text-gray-400">Searching…</div>
+            <div className="text-af-xs text-neutral-600">Searching…</div>
           ) : null}
 
           {providerError ? (
-            <div className="rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-2 text-xs text-gray-600 dark:text-gray-300">
+            <div className="rounded-af-md border border-neutral-750 bg-surface-element p-2 text-af-xs text-neutral-400">
               {providerError}
             </div>
           ) : null}
 
           {providerQuery.trim().length > 0 && !isSearchingProviders && !providerError && providerResults.length === 0 ? (
-            <div className="rounded-md border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 p-3 text-center text-xs text-gray-500 dark:text-gray-400">
+            <div className="rounded-af-md border border-dashed border-neutral-750 bg-neutral-900/30 p-3 text-center text-af-xs text-neutral-600">
               No results
             </div>
           ) : null}
 
           {providerResults.length > 0 ? (
-            <div className="max-h-64 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40">
+            <div className="max-h-64 overflow-y-auto rounded-af-md border border-neutral-750 bg-surface-element">
               {providerResults.map((r) => (
                 (() => {
                   const isImported = importedProviderKeys.has(`${r.providerType}:${r.providerTrackId}`);
@@ -709,30 +719,30 @@ function AddSongForm() {
                     providerTrackId: r.providerTrackId,
                     providerType: r.providerType,
                   })}
-                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50 ${
+                  className={`w-full text-left px-3 py-2 hover:bg-neutral-800 transition-colors duration-af-fast disabled:opacity-50 ${
                     isImported ? 'opacity-50' : ''
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                    <div className="w-10 h-10 flex-shrink-0 rounded-af-sm bg-neutral-800 overflow-hidden">
                       {r.artwork ? (
                         <img src={r.artwork} alt="" className="w-full h-full object-cover" loading="lazy" />
                       ) : null}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={r.title}>
+                      <div className="text-af-body font-medium text-neutral-100 truncate" title={r.title}>
                         {r.title}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={r.artist}>
+                      <div className="text-af-xs text-neutral-500 truncate" title={r.artist}>
                         {r.artist}
                       </div>
                       {r.album ? (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={r.album}>
+                        <div className="text-af-xs text-neutral-500 truncate" title={r.album}>
                           {r.album}
                         </div>
                       ) : null}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-af-xs text-neutral-600">
                       {isImported ? 'Imported' : importingTrackId === r.providerTrackId ? 'Importing…' : 'Import'}
                     </div>
                   </div>
@@ -753,16 +763,16 @@ function LabelsSummary() {
   const superLabelCount = useStore((state) => state.superLabelIds.length);
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+    <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3 space-y-2 text-af-body text-neutral-400">
       <div className="flex items-center justify-between">
         <span>Total Labels</span>
-        <span className="font-semibold text-gray-900 dark:text-white">{labelCount}</span>
+        <span className="font-semibold text-neutral-100">{labelCount}</span>
       </div>
       <div className="flex items-center justify-between">
         <span>Super Labels</span>
-        <span className="font-semibold text-gray-900 dark:text-white">{superLabelCount}</span>
+        <span className="font-semibold text-neutral-100">{superLabelCount}</span>
       </div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-af-xs text-neutral-600">
         Detailed label management ships in a later phase.
       </p>
     </div>
@@ -776,18 +786,18 @@ function FiltersSummary() {
 
   if (allSongsActive || activeLabelIds.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 text-sm text-gray-500 dark:text-gray-400">
+      <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3 text-af-body text-neutral-600">
         All songs visible
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-1 text-sm text-gray-700 dark:text-gray-200">
+    <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3 space-y-1">
       {activeLabelIds.map((labelId) => (
-        <div key={labelId} className="flex items-center justify-between text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          <span>{labelsById[labelId]?.name ?? labelId}</span>
-          <span className="text-gray-400 dark:text-gray-500">Active</span>
+        <div key={labelId} className="flex items-center justify-between text-af-xs">
+          <span className="text-neutral-300">{labelsById[labelId]?.name ?? labelId}</span>
+          <span className="text-neutral-600">Active</span>
         </div>
       ))}
     </div>

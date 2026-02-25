@@ -22,15 +22,15 @@ export function RightPanel() {
   const closePanel = useStore((state) => state.closePanel);
 
   return (
-    <aside className="w-80 h-full min-h-0 flex flex-col bg-panel-light dark:bg-panel-dark border-l border-gray-200 dark:border-gray-800">
+    <aside className="w-80 h-full min-h-0 flex flex-col bg-surface-panel border-l border-neutral-750">
       {/* Panel header */}
-      <div className="h-12 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-panel-light/95 dark:bg-panel-dark/95">
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+      <div className="h-12 flex items-center justify-between px-4 border-b border-neutral-750 bg-surface-panel">
+        <h2 className="text-sm font-semibold text-neutral-200">
           {getPanelTitle(contentType)}
         </h2>
         <button
           onClick={() => closePanel('right')}
-          className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded"
+          className="p-1 text-neutral-500 hover:text-neutral-300 rounded-af-sm transition-colors duration-af-fast"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -121,20 +121,20 @@ function LabelList() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search labels in your library…"
-        className="w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+        className="w-full h-9 px-3 text-sm bg-neutral-800 border border-neutral-750 rounded-af-md text-neutral-100 placeholder:text-neutral-600 focus:ring-1 focus:ring-neutral-600 focus:outline-none"
       />
 
       <button
         type="button"
         onClick={() => setIsBulkImportOpen(true)}
-        className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900"
+        className="w-full px-3 py-2 text-sm rounded-af-md border border-neutral-750 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors duration-af-fast"
       >
         Bulk Import Labels
       </button>
 
       {normalizedQuery.length > 0 && sortedLabels.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-          <p className="text-sm">No matches found</p>
+        <div className="rounded-af-md border border-dashed border-neutral-750 bg-neutral-900/30 py-6 text-center text-neutral-600">
+          <p className="text-af-small">No matches found</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -144,10 +144,10 @@ function LabelList() {
               draggable
               onDragStart={(event) => handleDragStart(event, label.labelId)}
               onClick={() => openPanel('right', 'label-info', label.labelId)}
-              className="cursor-pointer rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900"
+              className="cursor-pointer rounded-af-md border border-neutral-750 bg-surface-element px-3 py-2.5 hover:bg-neutral-800 transition-colors duration-af-fast"
               title={label.name}
             >
-              <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              <div className="text-af-body font-medium text-neutral-100 truncate">
                 {label.name}
               </div>
             </div>
@@ -180,8 +180,8 @@ function LabelInfo() {
 
   if (!labelId || !label) {
     return (
-      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-        <p className="text-sm">Label not found</p>
+      <div className="text-center text-neutral-600 py-8">
+        <p className="text-af-small">Label not found</p>
       </div>
     );
   }
@@ -297,40 +297,40 @@ function LabelInfo() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
+      <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3">
         <div className="mb-2">
           <span
             draggable
             onDragStart={handleNamePillDragStart}
-            className="inline-flex items-center px-3 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 cursor-grab active:cursor-grabbing"
+            className="inline-flex items-center px-3 py-1 text-af-xs rounded-af-pill bg-neutral-750 text-neutral-200 border border-neutral-700 cursor-grab active:cursor-grabbing"
             title="Drag to canvas"
           >
             {label.name}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={label.name}>
+          <p className="text-af-body font-semibold text-neutral-100 truncate" title={label.name}>
             {label.name}
           </p>
           {isManualLabel && (
-            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full">
+            <span className="px-2 py-0.5 text-af-xs bg-neutral-750 text-neutral-400 rounded-af-pill border border-neutral-700">
               Manual
             </span>
           )}
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <span className="text-af-label uppercase tracking-widest text-neutral-600">
             Type
           </span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+          <span className="text-af-xs px-2 py-0.5 rounded-af-pill bg-neutral-750 text-neutral-300 border border-neutral-700">
             {label.type}
           </span>
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
+      <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3 space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <p className="text-af-label uppercase tracking-widest text-neutral-600">
             Description
           </p>
           {!isEditing ? (
@@ -338,7 +338,7 @@ function LabelInfo() {
               type="button"
               onClick={handleStartEdit}
               disabled={isDeleting || isSaving}
-              className="text-xs px-2 py-1 rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-40"
+              className="text-af-xs px-2 py-1 rounded-af-sm border border-neutral-750 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 disabled:opacity-40 transition-colors duration-af-fast"
             >
               Edit
             </button>
@@ -347,11 +347,11 @@ function LabelInfo() {
 
         {!isEditing ? (
           description.trim().length > 0 ? (
-            <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap break-words">
+            <p className="text-af-body text-neutral-300 whitespace-pre-wrap break-words">
               {description}
             </p>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No description</p>
+            <p className="text-af-body text-neutral-600">No description</p>
           )
         ) : (
           <div className="space-y-2">
@@ -359,14 +359,14 @@ function LabelInfo() {
               value={draftDescription}
               onChange={(e) => setDraftDescription(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md resize-none"
+              className="w-full px-3 py-2 text-sm bg-neutral-800 border border-neutral-750 rounded-af-md text-neutral-100 resize-none focus:ring-1 focus:ring-neutral-600 focus:outline-none"
             />
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={handleCancelEdit}
                 disabled={isSaving}
-                className="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-40"
+                className="px-3 py-1.5 text-sm rounded-af-md border border-neutral-750 text-neutral-400 hover:bg-neutral-800 disabled:opacity-40 transition-colors duration-af-fast"
               >
                 Cancel
               </button>
@@ -374,7 +374,7 @@ function LabelInfo() {
                 type="button"
                 onClick={() => void handleSave()}
                 disabled={isSaving}
-                className="px-3 py-1.5 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+                className="px-3 py-1.5 text-sm rounded-af-md bg-neutral-100 text-neutral-950 font-medium hover:bg-white disabled:opacity-40 transition-colors duration-af-fast"
               >
                 {isSaving ? 'Saving…' : 'Save'}
               </button>
@@ -384,8 +384,8 @@ function LabelInfo() {
       </div>
 
       {metadataEntries.length > 0 && (
-        <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3 space-y-2">
+          <p className="text-af-label uppercase tracking-widest text-neutral-600">
             Metadata
           </p>
           <div className="space-y-2">
@@ -407,10 +407,10 @@ function LabelInfo() {
 
               return (
                 <div key={key} className="grid grid-cols-[120px_1fr] gap-3">
-                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 truncate" title={key}>
+                  <div className="text-af-xs font-medium text-neutral-500 truncate" title={key}>
                     {key}
                   </div>
-                  <div className="text-sm text-gray-700 dark:text-gray-200 break-words">
+                  <div className="text-af-body text-neutral-300 break-words">
                     {displayValue}
                   </div>
                 </div>
@@ -420,20 +420,20 @@ function LabelInfo() {
         </div>
       )}
 
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <div className="rounded-af-lg border border-neutral-750 bg-surface-element p-3 space-y-2">
+        <p className="text-af-label uppercase tracking-widest text-neutral-600">
           Timestamps
         </p>
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Created</span>
-            <span className="text-xs text-gray-700 dark:text-gray-200 truncate" title={label.createdAt}>
+            <span className="text-af-xs text-neutral-600">Created</span>
+            <span className="text-af-xs text-neutral-400 truncate" title={label.createdAt}>
               {label.createdAt}
             </span>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Updated</span>
-            <span className="text-xs text-gray-700 dark:text-gray-200 truncate" title={label.updatedAt}>
+            <span className="text-af-xs text-neutral-600">Updated</span>
+            <span className="text-af-xs text-neutral-400 truncate" title={label.updatedAt}>
               {label.updatedAt}
             </span>
           </div>
@@ -464,9 +464,9 @@ function SuperLabelInfoPlaceholder() {
   const entityId = useStore((state) => state.right.entityId);
   
   return (
-    <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-      <p className="text-sm">Super label info for: {entityId || 'unknown'}</p>
-      <p className="text-xs mt-2">Coming soon</p>
+    <div className="text-center text-neutral-600 py-8">
+      <p className="text-af-small">Super label info for: {entityId || 'unknown'}</p>
+      <p className="text-af-xs mt-2">Coming soon</p>
     </div>
   );
 }
@@ -506,19 +506,19 @@ function AddLabelForm() {
   return (
     <form onSubmit={(event) => void handleSubmit(event)} className="space-y-3">
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <label className="block text-af-label uppercase tracking-widest text-neutral-600">
           Name
         </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+          className="mt-1 w-full h-9 px-3 text-sm bg-neutral-800 border border-neutral-750 rounded-af-md text-neutral-100 placeholder:text-neutral-600 focus:ring-1 focus:ring-neutral-600 focus:outline-none"
         />
       </div>
       <button
         type="submit"
         disabled={isSubmitting || !name.trim()}
-        className="w-full px-3 py-2 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+        className="w-full px-3 py-2 text-sm rounded-af-md bg-neutral-100 text-neutral-950 font-medium hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-af-fast"
       >
         Create
       </button>
@@ -528,8 +528,8 @@ function AddLabelForm() {
 
 function AddSuperLabelPlaceholder() {
   return (
-    <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-      <p className="text-sm">Add super label form coming soon</p>
+    <div className="text-center text-neutral-600 py-8">
+      <p className="text-af-small">Add super label form coming soon</p>
     </div>
   );
 }
