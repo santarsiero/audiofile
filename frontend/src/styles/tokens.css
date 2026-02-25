@@ -1,0 +1,110 @@
+/*
+ * AudioFile Design Tokens — Phase 13.2 Task 1
+ * CSS custom property declarations only.
+ * No component styles. No utility classes.
+ * Font families are declared as tokens here.
+ * Google Fonts @import deferred to Task 2.
+ */
+
+:root {
+  /* Surface */
+  --af-surface-base:    #0A0A0F;
+  --af-surface-canvas:  #0D0D12;
+  --af-surface-panel:   #111118;
+  --af-surface-element: #17171F;
+  --af-surface-raised:  #1D1D26;
+
+  /* Borders (rgba — not expressible as Tailwind utilities) */
+  --af-border-subtle: rgba(255, 255, 255, 0.07);
+  --af-border-medium: rgba(255, 255, 255, 0.12);
+  --af-border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Text */
+  --af-text-primary:   #E8E8F0;
+  --af-text-secondary: #8A8AA0;
+  --af-text-muted:     #5A5A70;
+  --af-text-dim:       #333345;
+  --af-text-white:     #FFFFFF;
+
+  /* Fonts — families declared as tokens, @import deferred to Task 2 */
+  --af-font-ui:    'DM Sans', system-ui, sans-serif;
+  --af-font-brand: 'Syne', system-ui, sans-serif;
+  --af-font-mono:  'DM Mono', monospace;
+
+  /* Motion */
+  --af-motion-fast: 150ms;
+  --af-motion-base: 200ms;
+  --af-motion-slow: 220ms;
+  --af-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --af-ease-in:  cubic-bezier(0.4, 0, 1, 1);
+  --af-ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Radii */
+  --af-radius-sm:   4px;
+  --af-radius-md:   6px;
+  --af-radius-lg:   8px;
+  --af-radius-xl:   10px;
+  --af-radius-pill: 9999px;
+
+  /* Shadows */
+  --af-shadow-sm:    0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.5);
+  --af-shadow-md:    0 4px 8px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+  --af-shadow-lg:    0 8px 24px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.5);
+  --af-shadow-float: 0 12px 32px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.5);
+  --af-shadow-lift:  0 8px 20px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4);
+
+  /* Destructive */
+  --af-destructive:         #EF4444;
+  --af-destructive-muted:   #7F1D1D;
+  --af-destructive-surface: #1A0808;
+  --af-destructive-text:    #FCA5A5;
+
+  /* Label Spectrum */
+  --af-label-green-bg:     #0F2D1A; --af-label-green-text:   #4ADE80;
+  --af-label-green-border: #1A4D2E; --af-label-green-dot:    #22C55E;
+
+  --af-label-red-bg:     #2D0F0F; --af-label-red-text:   #F87171;
+  --af-label-red-border: #4D1A1A; --af-label-red-dot:    #EF4444;
+
+  --af-label-blue-bg:     #0F1A2D; --af-label-blue-text:   #60A5FA;
+  --af-label-blue-border: #1A2D4D; --af-label-blue-dot:    #3B82F6;
+
+  --af-label-orange-bg:     #2D1A0F; --af-label-orange-text:   #FB923C;
+  --af-label-orange-border: #4D2E1A; --af-label-orange-dot:    #F97316;
+
+  --af-label-purple-bg:     #1A0F2D; --af-label-purple-text:   #A78BFA;
+  --af-label-purple-border: #2D1A4D; --af-label-purple-dot:    #8B5CF6;
+
+  --af-label-teal-bg:     #0F2424; --af-label-teal-text:   #2DD4BF;
+  --af-label-teal-border: #1A3D3D; --af-label-teal-dot:    #14B8A6;
+
+  --af-label-yellow-bg:     #2D240F; --af-label-yellow-text:   #FDE047;
+  --af-label-yellow-border: #4D3D1A; --af-label-yellow-dot:    #EAB308;
+
+  --af-label-rose-bg:     #2D0F1A; --af-label-rose-text:   #FB7185;
+  --af-label-rose-border: #4D1A2E; --af-label-rose-dot:    #F43F5E;
+}
+
+/* Light mode overrides */
+.light {
+  --af-surface-base:    #F5F5FA;
+  --af-surface-canvas:  #EEEEF6;
+  --af-surface-panel:   #FFFFFF;
+  --af-surface-element: #F0F0F6;
+  --af-surface-raised:  #E8E8F0;
+
+  --af-border-subtle: rgba(0, 0, 0, 0.06);
+  --af-border-medium: rgba(0, 0, 0, 0.10);
+  --af-border-strong: rgba(0, 0, 0, 0.16);
+
+  --af-text-primary:   #0A0A0F;
+  --af-text-secondary: #3A3A50;
+  --af-text-muted:     #5A5A70;
+  --af-text-dim:       #8A8AA0;
+
+  --af-shadow-sm:    0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.08);
+  --af-shadow-md:    0 4px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+  --af-shadow-lg:    0 8px 24px rgba(0,0,0,0.14), 0 4px 8px rgba(0,0,0,0.10);
+  --af-shadow-float: 0 12px 32px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.12);
+  --af-shadow-lift:  0 8px 20px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.10);
+}
