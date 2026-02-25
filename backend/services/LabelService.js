@@ -39,6 +39,65 @@ export async function getAllLabels(libraryId, options = {}) {
 }
 
 /**
+ * Update allowed label fields (description, metadata)
+ *
+ * @param {string} libraryId - The library ID
+ * @param {string} labelId - The label ID
+ * @param {object} patch - Allowed fields: description (string), metadata (object)
+ * @returns {Promise<object>} Updated label document
+ * @throws {Error} 400 if unknown keys or invalid types, 404 if label not found
+ */
+export async function updateLabelFields(libraryId, labelId, patch) {
+  const allowedKeys = ['description', 'metadata'];
+  const providedKeys = Object.keys(patch ?? {});
+
+  const unknownKeys = providedKeys.filter((key) => !allowedKeys.includes(key));
+  if (unknownKeys.length > 0) {
+    const error = new Error(
+      `Unknown fields: ${unknownKeys.join(', ')}. Allowed: ${allowedKeys.join(', ')}`
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  if ('description' in patch) {
+    if (typeof patch.description !== 'string') {
+      const error = new Error('description must be a string');
+      error.status = 400;
+      throw error;
+    }
+  }
+
+  if ('metadata' in patch) {
+    const meta = patch.metadata;
+    const isPlainObject = meta !== null && typeof meta === 'object' && !Array.isArray(meta);
+    if (!isPlainObject) {
+      const error = new Error('metadata must be an object');
+      error.status = 400;
+      throw error;
+    }
+  }
+
+  const label = await Label.findOne({ libraryId, labelId });
+  if (!label) {
+    const error = new Error('Label not found in this library');
+    error.status = 404;
+    throw error;
+  }
+
+  if ('description' in patch) {
+    label.description = patch.description;
+  }
+
+  if ('metadata' in patch) {
+    label.metadata = patch.metadata;
+  }
+
+  await label.save();
+  return label.toObject();
+}
+
+/**
  * Create a REGULAR label
  * 
  * @param {string} libraryId - The library ID
@@ -352,5 +411,6 @@ export default {
   createSuperLabel,
   getLabelById,
   replaceSuperComponents,
+  updateLabelFields,
   deleteLabel,
 };

@@ -12,7 +12,7 @@
  * - "My Library" is the only active view
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useStore } from '@/store';
 import { clearTokens } from '@/services/authTokens';
 import type { LabelId } from '@/types/entities';
@@ -25,6 +25,51 @@ export function Header() {
   const activeLibraryId = useStore((state) => state.activeLibraryId);
   const canOpenCreatePanels = Boolean(activeLibraryId);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+
+  const songsById = useStore((state) => state.songsById);
+  const songIds = useStore((state) => state.songIds);
+  const labelsById = useStore((state) => state.labelsById);
+  const labelIds = useStore((state) => state.labelIds);
+
+  const [globalQuery, setGlobalQuery] = useState('');
+
+  const normalizedGlobalQuery = globalQuery.trim().toLowerCase();
+  const globalResults = useMemo(() => {
+    if (!normalizedGlobalQuery) {
+      return { songs: [], labels: [] };
+    }
+
+    const songs = songIds
+      .map((id) => songsById[id])
+      .filter(Boolean)
+      .filter((song) => {
+        const haystack = [
+          song.nickname,
+          song.displayTitle,
+          song.displayArtist,
+          song.officialTitle,
+          song.officialArtist,
+          song.albumName,
+        ]
+          .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(normalizedGlobalQuery);
+      })
+      .slice(0, 10);
+
+    const labels = labelIds
+      .map((id) => labelsById[id])
+      .filter(Boolean)
+      .filter((label) => label.name.toLowerCase().includes(normalizedGlobalQuery))
+      .slice(0, 10);
+
+    return { songs, labels };
+  }, [labelIds, labelsById, normalizedGlobalQuery, songIds, songsById]);
+
+  const shouldShowGlobalResults =
+    normalizedGlobalQuery.length > 0 &&
+    (globalResults.songs.length > 0 || globalResults.labels.length > 0);
 
   // TEMPORARY (Phase 11 bridge): Settings is not wired yet.
   // For Phase 11, clicking Settings logs out after confirmation.
@@ -103,6 +148,8 @@ export function Header() {
             <input
               type="text"
               placeholder="Search songs and labels..."
+              value={globalQuery}
+              onChange={(e) => setGlobalQuery(e.target.value)}
               className="w-full h-9 px-4 pr-10 text-sm bg-gray-100 dark:bg-gray-800 border-0 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             <svg
@@ -118,6 +165,84 @@ export function Header() {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
+
+            {shouldShowGlobalResults && (
+              <div className="absolute left-0 right-0 mt-2 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg overflow-hidden z-50">
+                <div className="max-h-[340px] overflow-y-auto">
+                  {globalResults.songs.length > 0 && (
+                    <div className="p-2">
+                      <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Songs
+                      </div>
+                      <div className="space-y-1">
+                        {globalResults.songs.map((song) => {
+                          const title = song.nickname || song.displayTitle;
+                          const subtitle = song.displayArtist;
+                          return (
+                            <button
+                              key={song.songId}
+                              type="button"
+                              onClick={() => {
+                                openPanel('left', 'song-info', song.songId);
+                                setGlobalQuery('');
+                              }}
+                              className="w-full text-left rounded-md px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 flex-shrink-0 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                  {song.albumArtUrl ? (
+                                    <img
+                                      src={song.albumArtUrl}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                      draggable={false}
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                    {title}
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {subtitle}
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {globalResults.labels.length > 0 && (
+                    <div className={`p-2 ${globalResults.songs.length > 0 ? 'border-t border-gray-100 dark:border-gray-800' : ''}`}>
+                      <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                        Labels
+                      </div>
+                      <div className="flex flex-wrap gap-2 px-2 py-2">
+                        {globalResults.labels.map((label) => (
+                          <button
+                            key={label.labelId}
+                            type="button"
+                            onClick={() => {
+                              openPanel('right', 'label-info', label.labelId);
+                              setGlobalQuery('');
+                            }}
+                            className="px-3 py-1.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                          >
+                            {label.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -13,6 +13,9 @@ export type { AuthSlice } from './authSlice';
 export { createSongsSlice, selectAllSongs, selectSongById, selectSongsByIds, selectSongCount } from './songsSlice';
 export type { SongsSlice } from './songsSlice';
 
+export { createSongSourcesSlice } from './songSourcesSlice';
+export type { SongSourcesSlice } from './songSourcesSlice';
+
 export { 
   createLabelsSlice, 
   selectAllLabels, 

@@ -104,6 +104,21 @@ export async function deleteSong(songId: SongId): Promise<SongId> {
   return response.deletedSongId;
 }
 
+export async function bulkImportSongs(items: unknown[], applyLabelIds?: string[]): Promise<unknown> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+
+  return apiClient.post<unknown>(
+    `libraries/${activeLibraryId}/songs/bulk-import`,
+    {
+      items,
+      ...(Array.isArray(applyLabelIds) ? { applyLabelIds } : {}),
+    }
+  );
+}
+
 /**
  * Song API service object
  */
@@ -112,5 +127,6 @@ export const songApi = {
   fetchById: fetchSongById,
   create: createSong,
   update: updateSong,
+  bulkImport: bulkImportSongs,
   delete: deleteSong,
 } as const;

@@ -3,11 +3,15 @@ import { useStore } from '@/store';
 import { songApi } from '@/services/songApi';
 import { labelApi } from '@/services/labelApi';
 import { providerApi } from '@/services/providerApi';
+import * as libraryApi from '@/services/libraryApi';
 import type { SongId, LabelId } from '@/types/entities';
+import { BulkSongImportModal } from '@/components/modals/BulkSongImportModal';
 
 export function LeftPanel() {
   const contentType = useStore((state) => state.left.contentType);
   const closePanel = useStore((state) => state.closePanel);
+
+  const [isBulkSongImportOpen, setIsBulkSongImportOpen] = useState(false);
 
   return (
     <aside className="w-80 h-full min-h-0 flex flex-col bg-panel-light dark:bg-panel-dark border-r border-gray-200 dark:border-gray-800">
@@ -28,6 +32,17 @@ export function LeftPanel() {
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-6">
         <section className="space-y-3">
           <SectionHeader title="Songs" subtitle={getPanelTitle(contentType)} />
+          <BulkSongImportModal
+            isOpen={isBulkSongImportOpen}
+            onClose={() => setIsBulkSongImportOpen(false)}
+          />
+          <button
+            type="button"
+            onClick={() => setIsBulkSongImportOpen(true)}
+            className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900"
+          >
+            Bulk Import Songs
+          </button>
           <PanelContent contentType={contentType} />
         </section>
 
@@ -93,11 +108,18 @@ function SongInfo() {
   const song = useStore((state) => (songId ? state.songsById[songId] : undefined));
   const labelsBySongId = useStore((state) => state.labelsBySongId);
   const labelsById = useStore((state) => state.labelsById);
-  const removeSong = useStore((state) => state.removeSong);
   const removeAllInstancesOfEntity = useStore((state) => state.removeAllInstancesOfEntity);
   const setPanelContent = useStore((state) => state.setPanelContent);
+  const activeLibraryId = useStore((state) => state.activeLibraryId);
+  const setLibraryData = useStore((state) => state.setLibraryData);
+  const setSongs = useStore((state) => state.setSongs);
+  const setSongSources = useStore((state) => state.setSongSources);
+  const setLabels = useStore((state) => state.setLabels);
+  const setSongLabels = useStore((state) => state.setSongLabels);
+  const setModes = useStore((state) => state.setModes);
 
   const [isDeleteArmed, setIsDeleteArmed] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const deleteArmTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -110,6 +132,7 @@ function SongInfo() {
 
   const handleDeleteSong = async () => {
     if (!songId) return;
+    if (isDeleting) return;
 
     if (!isDeleteArmed) {
       setIsDeleteArmed(true);
@@ -134,10 +157,31 @@ function SongInfo() {
     );
     if (!confirmed) return;
 
-    await songApi.delete(songId);
-    removeSong(songId);
-    removeAllInstancesOfEntity(songId);
-    setPanelContent('left', 'song-list');
+    if (!activeLibraryId) {
+      window.alert('No active library selected.');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await songApi.delete(songId);
+      removeAllInstancesOfEntity(songId);
+
+      const data = await libraryApi.bootstrapLibrary(activeLibraryId);
+      setLibraryData(data.library);
+      setSongs(data.songs ?? []);
+      setSongSources(data.songSources ?? []);
+      setLabels(data.labels ?? [], data.superLabels ?? []);
+      setSongLabels(data.songLabels ?? []);
+      setModes(data.labelModes ?? []);
+
+      setPanelContent('left', 'song-list');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete song.';
+      window.alert(message);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (!songId) {
@@ -156,8 +200,33 @@ function SongInfo() {
     );
   }
 
+  const handleAlbumArtDragStart = (event: React.DragEvent<HTMLDivElement>) => {
+    event.dataTransfer.setData('application/x-audiofile-song', song.songId);
+    event.dataTransfer.setData('text/plain', `song:${song.songId}`);
+    event.dataTransfer.effectAllowed = 'copy';
+  };
+
   return (
     <div className="space-y-4">
+      <div
+        draggable
+        onDragStart={handleAlbumArtDragStart}
+        className="w-[120px] h-[120px] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 cursor-grab active:cursor-grabbing"
+        title="Drag to canvas"
+      >
+        {song.albumArtUrl ? (
+          <img
+            src={song.albumArtUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            draggable={false}
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800" />
+        )}
+      </div>
+
       <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
         <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={song.nickname || song.displayTitle}>
           {song.nickname || song.displayTitle}
@@ -188,12 +257,17 @@ function SongInfo() {
 
       <button
         type="button"
+        disabled={isDeleting}
         className={`w-full px-3 py-2 text-sm rounded-md border border-red-600 dark:border-red-500 bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 ${
           isDeleteArmed ? 'ring-2 ring-red-400 ring-offset-2 ring-offset-panel-light dark:ring-offset-panel-dark' : ''
-        }`}
+        } ${isDeleting ? 'opacity-60 cursor-not-allowed' : ''}`}
         onClick={() => void handleDeleteSong()}
       >
-        {isDeleteArmed ? 'Click again to permanently delete' : 'Delete Song (Permanent)'}
+        {isDeleting
+          ? 'Deleting…'
+          : isDeleteArmed
+            ? 'Click again to permanently delete'
+            : 'Delete Song (Permanent)'}
       </button>
       <p className="text-xs text-red-700/80 dark:text-red-300/80">
         Permanent. Not undoable.
@@ -234,11 +308,12 @@ function SongsOnCanvasList() {
   };
 
   const handleDoubleClick = (songId: SongId) => {
-    openPanel('right', 'song-info', songId);
+    openPanel('left', 'song-info', songId);
   };
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, songId: SongId) => {
     event.dataTransfer.setData('application/x-audiofile-song', songId);
+    event.dataTransfer.setData('text/plain', `song:${songId}`);
     event.dataTransfer.effectAllowed = 'copy';
   };
 
@@ -278,236 +353,74 @@ function SongsOnCanvasList() {
 }
 
 function SearchResultsPlaceholder() {
-  const [scope, setScope] = useState<'library' | 'external'>('library');
+  const openPanel = useStore((state) => state.openPanel);
+  const songsById = useStore((state) => state.songsById);
+  const songIds = useStore((state) => state.songIds);
   const [query, setQuery] = useState('');
-  const [providerType, setProviderType] = useState('APPLE_MUSIC');
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<Array<{
-    title: string;
-    artist: string;
-    providerTrackId: string;
-    providerType: string;
-    album?: string;
-    artwork?: string;
-    durationMs?: number;
-    raw?: unknown;
-  }>>([]);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [importStateByKey, setImportStateByKey] = useState<
-    Record<string, { status: 'idle' | 'loading' | 'success' | 'error'; message?: string }>
-  >({});
 
-  const handleExternalSearch = async () => {
-    setHasSearched(true);
-    setHasError(false);
-    setIsLoading(true);
-    try {
-      const response = await providerApi.searchProviders({ providerType, query: query.trim() });
-      setResults(response.results);
-    } catch (err) {
-      console.error('[ui.external_search]', err);
-      setResults([]);
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleImport = async (item: {
-    title: string;
-    artist: string;
-    providerTrackId: string;
-    providerType: string;
-    album?: string;
-    artwork?: string;
-    durationMs?: number;
-    raw?: unknown;
-  }) => {
-    const key = `${item.providerType}:${item.providerTrackId}`;
-    setImportStateByKey((prev) => ({ ...prev, [key]: { status: 'loading' } }));
-
-    const displayTitle = item.title;
-    const displayArtist = item.artist;
-
-    const providerImport = {
-      providerType: item.providerType,
-      providerTrackId: item.providerTrackId,
-    };
-
-    const providerMetadata: Record<string, unknown> = {
-      providerType: item.providerType,
-      providerTrackId: item.providerTrackId,
-      raw: item.raw,
-    };
-
-    const providerImportPartial =
-      typeof providerImport.providerType !== 'string' ||
-      providerImport.providerType.trim().length === 0 ||
-      typeof providerImport.providerTrackId !== 'string' ||
-      providerImport.providerTrackId.trim().length === 0;
-
-    try {
-      await songApi.create({
-        displayTitle,
-        displayArtist,
-        officialTitle: null,
-        officialArtist: null,
-        albumName: item.album ?? null,
-        albumArtUrl: item.artwork ?? null,
-        durationMs: typeof item.durationMs === 'number' ? item.durationMs : null,
-        providerMetadata,
-        providerImport,
-        providerImportPartial,
-      });
-
-      setImportStateByKey((prev) => ({
-        ...prev,
-        [key]: { status: 'success', message: 'Imported' },
-      }));
-    } catch (err) {
-      console.error('[ui.external_search.import_failed]', err);
-      setImportStateByKey((prev) => ({
-        ...prev,
-        [key]: { status: 'error', message: 'Import failed' },
-      }));
-    }
-  };
+  const normalizedQuery = query.trim().toLowerCase();
+  const results = useMemo(() => {
+    if (!normalizedQuery) return [];
+    return songIds
+      .map((id) => songsById[id])
+      .filter(Boolean)
+      .filter((song) => {
+        const haystack = [
+          song.nickname,
+          song.displayTitle,
+          song.displayArtist,
+          song.officialTitle,
+          song.officialArtist,
+          song.albumName,
+        ]
+          .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      })
+      .slice(0, 50);
+  }, [normalizedQuery, songIds, songsById]);
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setScope('library')}
-          className={`px-3 py-1.5 text-sm rounded-md border ${
-            scope === 'library'
-              ? 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-              : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300'
-          }`}
-        >
-          Library
-        </button>
-        <button
-          type="button"
-          onClick={() => setScope('external')}
-          className={`px-3 py-1.5 text-sm rounded-md border ${
-            scope === 'external'
-              ? 'border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-              : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300'
-          }`}
-        >
-          External
-        </button>
+      <div className="space-y-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search songs in your library…"
+          className="w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+        />
       </div>
 
-      {scope === 'library' && (
+      {normalizedQuery.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-          <p className="text-sm">Search results will appear here</p>
+          <p className="text-sm">Type to search your library songs</p>
         </div>
-      )}
-
-      {scope === 'external' && (
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <select
-                value={providerType}
-                onChange={(e) => setProviderType(e.target.value)}
-                className="h-9 px-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+      ) : results.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
+          <p className="text-sm">No matches found</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {results.map((song) => {
+            const title = song.nickname || song.displayTitle;
+            const subtitle = song.displayArtist;
+            return (
+              <div
+                key={song.songId}
+                onClick={() => openPanel('left', 'song-info', song.songId)}
+                className="cursor-pointer rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900"
+                title={title}
               >
-                <option value="APPLE_MUSIC">APPLE_MUSIC</option>
-              </select>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search external provider…"
-                className="flex-1 h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
-              />
-            </div>
-
-            <button
-              type="button"
-              disabled={isLoading || query.trim().length === 0}
-              onClick={() => void handleExternalSearch()}
-              className="w-full px-3 py-2 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
-            >
-              {isLoading ? 'Searching…' : 'Search'}
-            </button>
-          </div>
-
-          {hasError && (
-            <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 text-sm text-gray-600 dark:text-gray-300">
-              Couldn’t fetch results. Try again.
-            </div>
-          )}
-
-          {!hasError && hasSearched && !isLoading && results.length === 0 && (
-            <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
-              <p className="text-sm">No matches found</p>
-            </div>
-          )}
-
-          {!hasError && results.length > 0 && (
-            <div className="space-y-2">
-              {results.map((item) => (
-                <div
-                  key={`${item.providerType}:${item.providerTrackId}`}
-                  className="rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                      {item.artwork ? (
-                        <img
-                          src={item.artwork}
-                          alt=""
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
-                          No Art
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={item.title}>
-                        {item.title}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={item.artist}>
-                        {item.artist}
-                      </div>
-                      {item.album && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={item.album}>
-                          {item.album}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col items-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => void handleImport(item)}
-                        disabled={importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'loading'}
-                        className="px-3 py-1.5 text-xs rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-40"
-                      >
-                        {importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'loading'
-                          ? 'Importing…'
-                          : 'Import'}
-                      </button>
-                      {importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'success' && (
-                        <span className="text-xs text-green-700/80 dark:text-green-300/80">Imported</span>
-                      )}
-                      {importStateByKey[`${item.providerType}:${item.providerTrackId}`]?.status === 'error' && (
-                        <span className="text-xs text-red-700/80 dark:text-red-300/80">Import failed</span>
-                      )}
-                    </div>
-                  </div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {title}
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {subtitle}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -520,10 +433,84 @@ function AddSongForm() {
   const addSongLabel = useStore((state) => state.addSongLabel);
   const labelsById = useStore((state) => state.labelsById);
   const setPanelContent = useStore((state) => state.setPanelContent);
+  const activeLibraryId = useStore((state) => state.activeLibraryId);
+  const setLibraryData = useStore((state) => state.setLibraryData);
+  const setSongs = useStore((state) => state.setSongs);
+  const songSources = useStore((state) => state.songSources);
+  const setSongSources = useStore((state) => state.setSongSources);
+  const setLabels = useStore((state) => state.setLabels);
+  const setSongLabels = useStore((state) => state.setSongLabels);
+  const setModes = useStore((state) => state.setModes);
+
+  const [mode, setMode] = useState<'manual' | 'provider'>('manual');
 
   const [title, setTitle] = useState('');
   const [artist, setArtist] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [providerQuery, setProviderQuery] = useState('');
+  const [providerResults, setProviderResults] = useState<Array<{
+    title: string;
+    artist: string;
+    providerTrackId: string;
+    providerType: string;
+    album?: string;
+    artwork?: string;
+  }>>([]);
+  const [isSearchingProviders, setIsSearchingProviders] = useState(false);
+  const [providerError, setProviderError] = useState<string | null>(null);
+  const [importingTrackId, setImportingTrackId] = useState<string | null>(null);
+
+  const importedProviderKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const src of songSources) {
+      if (!src?.providerType || !src?.externalId) continue;
+      set.add(`${src.providerType}:${src.externalId}`);
+    }
+    return set;
+  }, [songSources]);
+
+  useEffect(() => {
+    if (mode !== 'provider') {
+      return;
+    }
+
+    const q = providerQuery.trim();
+    if (!q) {
+      setProviderResults([]);
+      setProviderError(null);
+      setIsSearchingProviders(false);
+      return;
+    }
+
+    setIsSearchingProviders(true);
+    setProviderError(null);
+
+    const handle = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const response = await providerApi.searchProviders({
+            providerType: 'SPOTIFY',
+            query: q,
+          });
+          setProviderResults(response.results ?? []);
+        } catch (error) {
+          const message =
+            typeof (error as { reason?: unknown })?.reason === 'string'
+              ? String((error as { reason: string }).reason)
+              : error instanceof Error
+                ? error.message
+                : 'Provider search failed.';
+          setProviderResults([]);
+          setProviderError(message);
+        } finally {
+          setIsSearchingProviders(false);
+        }
+      })();
+    }, 450);
+
+    return () => window.clearTimeout(handle);
+  }, [mode, providerQuery]);
 
   const ensureManualLabel = async (): Promise<LabelId> => {
     const existing = Object.values(labelsById).find((label) => label.name === 'Manual');
@@ -581,36 +568,183 @@ function AddSongForm() {
     }
   };
 
+  const handleImportProviderResult = async (result: {
+    providerTrackId: string;
+    providerType: string;
+  }) => {
+    if (!activeLibraryId) {
+      window.alert('No active library selected.');
+      return;
+    }
+
+    if (importingTrackId) return;
+
+    setImportingTrackId(result.providerTrackId);
+    try {
+      await providerApi.importProviderTrackToLibrary({
+        libraryId: activeLibraryId,
+        providerType: result.providerType,
+        providerTrackId: result.providerTrackId,
+        starterLabelIds: [],
+      });
+
+      const data = await libraryApi.bootstrapLibrary(activeLibraryId);
+      setLibraryData(data.library);
+      setSongs(data.songs ?? []);
+      setSongSources(data.songSources ?? []);
+      setLabels(data.labels ?? [], data.superLabels ?? []);
+      setSongLabels(data.songLabels ?? []);
+      setModes(data.labelModes ?? []);
+
+      setProviderQuery('');
+      setProviderResults([]);
+      setPanelContent('left', 'song-list');
+    } catch (error) {
+      const message =
+        typeof (error as { reason?: unknown })?.reason === 'string'
+          ? String((error as { reason: string }).reason)
+          : error instanceof Error
+            ? error.message
+            : 'Failed to import track.';
+      window.alert(message);
+    } finally {
+      setImportingTrackId(null);
+    }
+  };
+
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} className="space-y-3">
-      <div>
-        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          Title
-        </label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
-        />
+    <div className="space-y-3">
+      <div className="inline-flex w-full rounded-md border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setMode('manual')}
+          className={`flex-1 px-3 py-2 text-sm ${
+            mode === 'manual'
+              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+              : 'bg-white/80 dark:bg-gray-900/40 text-gray-600 dark:text-gray-300'
+          }`}
+        >
+          Manual
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('provider')}
+          className={`flex-1 px-3 py-2 text-sm ${
+            mode === 'provider'
+              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+              : 'bg-white/80 dark:bg-gray-900/40 text-gray-600 dark:text-gray-300'
+          }`}
+        >
+          Provider
+        </button>
       </div>
-      <div>
-        <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          Artist
-        </label>
-        <input
-          value={artist}
-          onChange={(e) => setArtist(e.target.value)}
-          className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={isSubmitting || !title.trim() || !artist.trim()}
-        className="w-full px-3 py-2 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
-      >
-        Create
-      </button>
-    </form>
+
+      {mode === 'manual' ? (
+        <form onSubmit={(event) => void handleSubmit(event)} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Title
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              Artist
+            </label>
+            <input
+              value={artist}
+              onChange={(e) => setArtist(e.target.value)}
+              className="mt-1 w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting || !title.trim() || !artist.trim()}
+            className="w-full px-3 py-2 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+          >
+            Create
+          </button>
+        </form>
+      ) : (
+        <div className="space-y-2">
+          <input
+            value={providerQuery}
+            onChange={(e) => setProviderQuery(e.target.value)}
+            placeholder="Search Spotify tracks…"
+            className="w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+          />
+
+          {isSearchingProviders ? (
+            <div className="text-xs text-gray-500 dark:text-gray-400">Searching…</div>
+          ) : null}
+
+          {providerError ? (
+            <div className="rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-2 text-xs text-gray-600 dark:text-gray-300">
+              {providerError}
+            </div>
+          ) : null}
+
+          {providerQuery.trim().length > 0 && !isSearchingProviders && !providerError && providerResults.length === 0 ? (
+            <div className="rounded-md border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 p-3 text-center text-xs text-gray-500 dark:text-gray-400">
+              No results
+            </div>
+          ) : null}
+
+          {providerResults.length > 0 ? (
+            <div className="max-h-64 overflow-y-auto rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40">
+              {providerResults.map((r) => (
+                (() => {
+                  const isImported = importedProviderKeys.has(`${r.providerType}:${r.providerTrackId}`);
+                  const isDisabled = importingTrackId !== null || isImported;
+                  return (
+                <button
+                  key={`${r.providerType}:${r.providerTrackId}`}
+                  type="button"
+                  disabled={isDisabled}
+                  onClick={() => void handleImportProviderResult({
+                    providerTrackId: r.providerTrackId,
+                    providerType: r.providerType,
+                  })}
+                  className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-50 ${
+                    isImported ? 'opacity-50' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 flex-shrink-0 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                      {r.artwork ? (
+                        <img src={r.artwork} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white truncate" title={r.title}>
+                        {r.title}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={r.artist}>
+                        {r.artist}
+                      </div>
+                      {r.album ? (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate" title={r.album}>
+                          {r.album}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {isImported ? 'Imported' : importingTrackId === r.providerTrackId ? 'Importing…' : 'Import'}
+                    </div>
+                  </div>
+                </button>
+                  );
+                })()
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
   );
 }
 

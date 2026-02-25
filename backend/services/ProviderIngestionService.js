@@ -51,6 +51,21 @@ export async function importSingleTrack({
     });
   }
 
+  const existingSource = await SongSource.findOne({
+    libraryId: libraryId.trim(),
+    providerType: resolvedProviderType,
+    externalId,
+  }).lean();
+  if (existingSource?.songId) {
+    return {
+      songId: existingSource.songId,
+      created: false,
+      sourceCreated: false,
+      providerType: resolvedProviderType,
+      externalId,
+    };
+  }
+
   const provider = await resolveProvider(resolvedProviderType);
   const meta = await provider.import(externalId);
 
@@ -157,6 +172,28 @@ export async function importSingleTrack({
       sourceCreated = true;
     }
   } catch (error) {
+    if (error?.code === 11000) {
+      if (songWasNewlyCreated) {
+        await Song.deleteOne({ libraryId: libraryId.trim(), songId });
+      }
+
+      const concurrentSource = await SongSource.findOne({
+        libraryId: libraryId.trim(),
+        providerType: resolvedProviderType,
+        externalId,
+      }).lean();
+
+      if (concurrentSource?.songId) {
+        return {
+          songId: concurrentSource.songId,
+          created: false,
+          sourceCreated: false,
+          providerType: resolvedProviderType,
+          externalId,
+        };
+      }
+    }
+
     if (songWasNewlyCreated) {
       await Song.deleteOne({ libraryId: libraryId.trim(), songId });
     }

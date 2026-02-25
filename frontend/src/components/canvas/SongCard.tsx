@@ -16,6 +16,7 @@
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 
 import { usePlayback } from '@/context/playback';
+import { useStore } from '@/store';
 import type { HydratedSongCanvasItem } from '@/types/canvas';
 
 interface SongCardProps {
@@ -23,7 +24,8 @@ interface SongCardProps {
 }
 
 export function SongCard({ item }: SongCardProps) {
-  const { state, play } = usePlayback();
+  const { state } = usePlayback();
+  const openPanel = useStore((s) => s.openPanel);
   const song = item.entity;
 
   const [hasArtError, setHasArtError] = useState(false);
@@ -40,7 +42,7 @@ export function SongCard({ item }: SongCardProps) {
 
   const handleDoubleClick = (event: ReactMouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    play(song.songId);
+    openPanel('left', 'song-info', song.songId);
   };
 
   return (

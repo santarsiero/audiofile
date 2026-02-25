@@ -16,6 +16,8 @@ import type {
   CreateSuperLabelRequest,
   CreateSuperLabelResponse,
   DeleteLabelResponse,
+  UpdateLabelRequest,
+  UpdateLabelResponse,
   AddLabelToSongResponse,
   RemoveLabelFromSongResponse,
   GetSongLabelsResponse,
@@ -109,6 +111,33 @@ export async function deleteLabel(labelId: LabelId): Promise<LabelId> {
   return response.deletedLabelId;
 }
 
+/**
+ * Update a label (allowlisted fields only)
+ */
+export async function updateLabel(labelId: LabelId, patch: UpdateLabelRequest): Promise<Label> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+  const response = await apiClient.put<UpdateLabelResponse>(
+    `libraries/${activeLibraryId}/labels/${labelId}`,
+    patch
+  );
+  return response.label;
+}
+
+export async function bulkImportLabels(items: unknown[]): Promise<unknown> {
+  const { activeLibraryId } = useStore.getState();
+  if (!activeLibraryId) {
+    throw new Error('No active library selected');
+  }
+
+  return apiClient.post<unknown>(
+    `libraries/${activeLibraryId}/labels/bulk-import`,
+    { items }
+  );
+}
+
 // =============================================================================
 // TAGGING (Song-Label relationships)
 // =============================================================================
@@ -174,6 +203,8 @@ export const labelApi = {
   fetchById: fetchLabelById,
   create: createLabel,
   createSuper: createSuperLabel,
+  update: updateLabel,
+  bulkImport: bulkImportLabels,
   delete: deleteLabel,
   addToSong: addLabelToSong,
   removeFromSong: removeLabelFromSong,

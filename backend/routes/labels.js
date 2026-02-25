@@ -13,6 +13,7 @@ import {
   createSuperLabel,
   getLabelById,
   replaceSuperComponents,
+  updateLabelFields,
   deleteLabel,
 } from '../services/LabelService.js';
 
@@ -94,6 +95,27 @@ router.get('/:labelId', async (req, res) => {
       return res.status(404).json({ error: error.message });
     }
     console.error('Get label error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /api/libraries/:libraryId/labels/:labelId
+ * Update allowlisted label fields (description, metadata)
+ */
+router.put('/:labelId', async (req, res) => {
+  try {
+    const { libraryId, labelId } = req.params;
+    const label = await updateLabelFields(libraryId, labelId, req.body);
+    res.status(200).json({ label });
+  } catch (error) {
+    if (error.status === 400) {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.status === 404) {
+      return res.status(404).json({ error: error.message });
+    }
+    console.error('Update label error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

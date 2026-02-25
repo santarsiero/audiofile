@@ -1,5 +1,7 @@
 type ProviderType = string;
 
+import { apiClient } from './api';
+
 export interface CanonicalSearchResult {
   title: string;
   artist: string;
@@ -23,9 +25,12 @@ export interface ProviderSearchResponse {
   results: CanonicalSearchResult[];
 }
 
-function getApiBaseUrl(): string {
-  const rawApiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050/api';
-  return rawApiBaseUrl.endsWith('/') ? rawApiBaseUrl : `${rawApiBaseUrl}/`;
+export interface ProviderImportResponse {
+  songId: string;
+  created: boolean;
+  sourceCreated: boolean;
+  providerType: ProviderType;
+  externalId: string;
 }
 
 export async function searchProviders(input: {
@@ -34,35 +39,31 @@ export async function searchProviders(input: {
 }): Promise<ProviderSearchResponse> {
   const { providerType, query } = input;
 
-  const url = new URL('providers/search', getApiBaseUrl());
-  url.searchParams.set('providerType', providerType);
-  url.searchParams.set('q', query);
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
+  return apiClient.get<ProviderSearchResponse>('providers/search', {
+    providerType,
+    q: query,
   });
+}
 
-  const data = await response.json().catch(() => ({}));
+export async function importProviderTrackToLibrary(input: {
+  libraryId: string;
+  providerType: ProviderType;
+  providerTrackId: string;
+  starterLabelIds?: string[];
+}): Promise<ProviderImportResponse> {
+  const { libraryId, providerType, providerTrackId, starterLabelIds } = input;
 
-  if (!response.ok) {
-    if (data?.error) {
-      throw data.error as ProviderErrorPayload;
+  return apiClient.post<ProviderImportResponse>(
+    `libraries/${encodeURIComponent(libraryId)}/providers/import`,
+    {
+      providerType,
+      providerTrackId,
+      starterLabelIds,
     }
-
-    const message = typeof data?.message === 'string' ? data.message : `Request failed (${response.status})`;
-    throw new Error(message);
-  }
-
-  if (data?.error) {
-    throw data.error as ProviderErrorPayload;
-  }
-
-  return data as ProviderSearchResponse;
+  );
 }
 
 export const providerApi = {
   searchProviders,
+  importProviderTrackToLibrary,
 } as const;

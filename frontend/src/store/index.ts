@@ -18,6 +18,7 @@ import {
   createAuthSlice,
   createLibrarySlice,
   createSongsSlice,
+  createSongSourcesSlice,
   createLabelsSlice,
   createFiltersSlice,
   createSettingsSlice,
@@ -29,6 +30,7 @@ import {
 import type { AuthSlice } from './slices/authSlice';
 import type { LibrarySlice } from './slices/librarySlice';
 import type { SongsSlice } from './slices/songsSlice';
+import type { SongSourcesSlice } from './slices/songSourcesSlice';
 import type { LabelsSlice } from './slices/labelsSlice';
 import type { FiltersSlice } from './slices/filtersSlice';
 import type { SettingsSlice } from './slices/settingsSlice';
@@ -46,6 +48,7 @@ import type { PanelsSlice } from './slices/panelsSlice';
 export type AppStore = LibrarySlice &
   AuthSlice &
   SongsSlice &
+  SongSourcesSlice &
   LabelsSlice &
   FiltersSlice &
   SettingsSlice &
@@ -73,6 +76,7 @@ export const useStore = create<AppStore>()(
           ...createAuthSlice(...args),
           ...createLibrarySlice(...args),
           ...createSongsSlice(...args),
+          ...createSongSourcesSlice(...args),
           ...createLabelsSlice(...args),
           ...createFiltersSlice(...args),
           ...createSettingsSlice(...args),
@@ -163,6 +167,7 @@ export function resetAllState(): void {
   const store = useStore.getState();
   store.resetLibrary();
   store.resetSongs();
+  store.resetSongSources();
   store.resetLabels();
   store.resetFilters();
   store.resetSettings();

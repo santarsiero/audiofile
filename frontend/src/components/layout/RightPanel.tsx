@@ -10,10 +10,12 @@
  * Panel content is determined by state (panelsSlice).
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useStore } from '@/store';
 import { labelApi } from '@/services/labelApi';
-import type { LabelId, SongId } from '@/types/entities';
+import * as libraryApi from '@/services/libraryApi';
+import type { LabelId } from '@/types/entities';
+import { BulkLabelImportModal } from '@/components/modals/BulkLabelImportModal';
 
 export function RightPanel() {
   const contentType = useStore((state) => state.right.contentType);
@@ -52,8 +54,6 @@ function getPanelTitle(contentType: string | null): string {
       return 'Label Details';
     case 'superlabel-info':
       return 'Super Label Details';
-    case 'song-info':
-      return 'Song Details';
     case 'add-label':
       return 'Add Label';
     case 'add-superlabel':
@@ -71,8 +71,6 @@ function PanelContent({ contentType }: { contentType: string | null }) {
       return <LabelInfo />;
     case 'superlabel-info':
       return <SuperLabelInfoPlaceholder />;
-    case 'song-info':
-      return <SongInfo />;
     case 'add-label':
       return <AddLabelForm />;
     case 'add-superlabel':
@@ -89,10 +87,24 @@ function LabelList() {
   const labelsById = useStore((state) => state.labelsById);
   const openPanel = useStore((state) => state.openPanel);
 
-  const sortedLabels = labelIds
-    .map((id) => labelsById[id])
-    .filter(Boolean)
-    .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+
+  const [query, setQuery] = useState('');
+
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const sortedLabels = useMemo(() => {
+    const base = labelIds
+      .map((id) => labelsById[id])
+      .filter(Boolean)
+      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+
+    if (!normalizedQuery) return base;
+
+    return base
+      .filter((label) => label.name.toLowerCase().includes(normalizedQuery))
+      .slice(0, 50);
+  }, [labelIds, labelsById, normalizedQuery]);
 
   const handleDragStart = (event: React.DragEvent<HTMLDivElement>, labelId: LabelId) => {
     event.dataTransfer.setData('application/x-audiofile-label', labelId);
@@ -100,21 +112,48 @@ function LabelList() {
   };
 
   return (
-    <div className="space-y-2">
-      {sortedLabels.map((label) => (
-        <div
-          key={label.labelId}
-          draggable
-          onDragStart={(event) => handleDragStart(event, label.labelId)}
-          onClick={() => openPanel('right', 'label-info', label.labelId)}
-          className="cursor-pointer rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900"
-          title={label.name}
-        >
-          <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
-            {label.name}
-          </div>
+    <div className="space-y-3">
+      <BulkLabelImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+      />
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search labels in your library…"
+        className="w-full h-9 px-3 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md"
+      />
+
+      <button
+        type="button"
+        onClick={() => setIsBulkImportOpen(true)}
+        className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900"
+      >
+        Bulk Import Labels
+      </button>
+
+      {normalizedQuery.length > 0 && sortedLabels.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-white/60 dark:bg-gray-900/30 py-6 text-center text-gray-500 dark:text-gray-400">
+          <p className="text-sm">No matches found</p>
         </div>
-      ))}
+      ) : (
+        <div className="space-y-2">
+          {sortedLabels.map((label) => (
+            <div
+              key={label.labelId}
+              draggable
+              onDragStart={(event) => handleDragStart(event, label.labelId)}
+              onClick={() => openPanel('right', 'label-info', label.labelId)}
+              className="cursor-pointer rounded-md border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900"
+              title={label.name}
+            >
+              <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {label.name}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -122,6 +161,22 @@ function LabelList() {
 function LabelInfo() {
   const labelId = useStore((state) => state.right.entityId) as LabelId | null;
   const label = useStore((state) => (labelId ? state.labelsById[labelId] : undefined));
+  const activeLibraryId = useStore((state) => state.activeLibraryId);
+  const setLibraryData = useStore((state) => state.setLibraryData);
+  const setSongs = useStore((state) => state.setSongs);
+  const setSongSources = useStore((state) => state.setSongSources);
+  const setLabels = useStore((state) => state.setLabels);
+  const setSongLabels = useStore((state) => state.setSongLabels);
+  const setModes = useStore((state) => state.setModes);
+  const setPanelContent = useStore((state) => state.setPanelContent);
+  const removeAllInstancesOfEntity = useStore((state) => state.removeAllInstancesOfEntity);
+  const removeFilter = useStore((state) => state.removeFilter);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteArmed, setIsDeleteArmed] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftDescription, setDraftDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!labelId || !label) {
     return (
@@ -133,9 +188,126 @@ function LabelInfo() {
 
   const isManualLabel = label.name === 'Manual';
 
+  const description = typeof (label as { description?: unknown }).description === 'string'
+    ? (label as { description: string }).description
+    : '';
+
+  const metadataRaw = (label as { metadata?: unknown }).metadata;
+  const metadata =
+    metadataRaw && typeof metadataRaw === 'object' && !Array.isArray(metadataRaw)
+      ? (metadataRaw as Record<string, unknown>)
+      : null;
+
+  const metadataEntries = metadata ? Object.entries(metadata).filter(([key]) => key.trim().length > 0) : [];
+
+  const handleNamePillDragStart = (event: React.DragEvent<HTMLSpanElement>) => {
+    event.dataTransfer.setData('application/x-audiofile-label', label.labelId);
+    event.dataTransfer.setData('text/plain', `label:${label.labelId}`);
+    event.dataTransfer.effectAllowed = 'copy';
+  };
+
+  useEffect(() => {
+    if (isEditing) return;
+    setDraftDescription(description);
+  }, [description, isEditing]);
+
+  const handleStartEdit = () => {
+    setDraftDescription(description);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setDraftDescription(description);
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!labelId) return;
+    if (!activeLibraryId) {
+      window.alert('No active library selected.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await labelApi.update(labelId, { description: draftDescription });
+
+      const data = await libraryApi.bootstrapLibrary(activeLibraryId);
+      setLibraryData(data.library);
+      setSongs(data.songs ?? []);
+      setSongSources(data.songSources ?? []);
+      setLabels(data.labels ?? [], data.superLabels ?? []);
+      setSongLabels(data.songLabels ?? []);
+      setModes(data.labelModes ?? []);
+
+      setIsEditing(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update label.';
+      window.alert(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteLabel = async () => {
+    if (!labelId) return;
+    if (isDeleting) return;
+
+    if (!isDeleteArmed) {
+      setIsDeleteArmed(true);
+      window.setTimeout(() => setIsDeleteArmed(false), 2500);
+      return;
+    }
+
+    setIsDeleteArmed(false);
+
+    const confirmed = window.confirm(
+      'Permanently delete this label from your library? This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    if (!activeLibraryId) {
+      window.alert('No active library selected.');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await labelApi.delete(labelId);
+
+      removeAllInstancesOfEntity(labelId);
+      removeFilter(labelId);
+
+      const data = await libraryApi.bootstrapLibrary(activeLibraryId);
+      setLibraryData(data.library);
+      setSongs(data.songs ?? []);
+      setSongSources(data.songSources ?? []);
+      setLabels(data.labels ?? [], data.superLabels ?? []);
+      setSongLabels(data.songLabels ?? []);
+      setModes(data.labelModes ?? []);
+
+      setPanelContent('right', 'label-list');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete label.';
+      window.alert(message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
+        <div className="mb-2">
+          <span
+            draggable
+            onDragStart={handleNamePillDragStart}
+            className="inline-flex items-center px-3 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 cursor-grab active:cursor-grabbing"
+            title="Drag to canvas"
+          >
+            {label.name}
+          </span>
+        </div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={label.name}>
             {label.name}
@@ -146,7 +318,144 @@ function LabelInfo() {
             </span>
           )}
         </div>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            Type
+          </span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+            {label.type}
+          </span>
+        </div>
       </div>
+
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            Description
+          </p>
+          {!isEditing ? (
+            <button
+              type="button"
+              onClick={handleStartEdit}
+              disabled={isDeleting || isSaving}
+              className="text-xs px-2 py-1 rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-40"
+            >
+              Edit
+            </button>
+          ) : null}
+        </div>
+
+        {!isEditing ? (
+          description.trim().length > 0 ? (
+            <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap break-words">
+              {description}
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No description</p>
+          )
+        ) : (
+          <div className="space-y-2">
+            <textarea
+              value={draftDescription}
+              onChange={(e) => setDraftDescription(e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md resize-none"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={isSaving}
+                className="px-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-900 disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={isSaving}
+                className="px-3 py-1.5 text-sm rounded-md border border-blue-600 dark:border-blue-500 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+              >
+                {isSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {metadataEntries.length > 0 && (
+        <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            Metadata
+          </p>
+          <div className="space-y-2">
+            {metadataEntries.map(([key, value]) => {
+              const displayValue =
+                value === null || value === undefined
+                  ? ''
+                  : typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+                    ? String(value)
+                    : Array.isArray(value)
+                      ? value
+                          .map((v) =>
+                            typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+                              ? String(v)
+                              : '[object]'
+                          )
+                          .join(', ')
+                      : '[object]';
+
+              return (
+                <div key={key} className="grid grid-cols-[120px_1fr] gap-3">
+                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-300 truncate" title={key}>
+                    {key}
+                  </div>
+                  <div className="text-sm text-gray-700 dark:text-gray-200 break-words">
+                    {displayValue}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          Timestamps
+        </p>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Created</span>
+            <span className="text-xs text-gray-700 dark:text-gray-200 truncate" title={label.createdAt}>
+              {label.createdAt}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Updated</span>
+            <span className="text-xs text-gray-700 dark:text-gray-200 truncate" title={label.updatedAt}>
+              {label.updatedAt}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        disabled={isDeleting || isManualLabel}
+        className={`w-full px-3 py-2 text-sm rounded-md border border-red-600 dark:border-red-500 bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 ${
+          isDeleteArmed ? 'ring-2 ring-red-400 ring-offset-2 ring-offset-panel-light dark:ring-offset-panel-dark' : ''
+        } ${(isDeleting || isManualLabel) ? 'opacity-60 cursor-not-allowed' : ''}`}
+        onClick={() => void handleDeleteLabel()}
+      >
+        {isManualLabel
+          ? 'Manual label cannot be deleted'
+          : isDeleting
+            ? 'Deleting…'
+            : isDeleteArmed
+              ? 'Click again to permanently delete'
+              : 'Delete Label (Permanent)'}
+      </button>
     </div>
   );
 }
@@ -162,52 +471,6 @@ function SuperLabelInfoPlaceholder() {
   );
 }
 
-function SongInfo() {
-  const songId = useStore((state) => state.right.entityId) as SongId | null;
-  const song = useStore((state) => (songId ? state.songsById[songId] : undefined));
-  const labelsBySongId = useStore((state) => state.labelsBySongId);
-  const labelsById = useStore((state) => state.labelsById);
-
-  if (!songId || !song) {
-    return (
-      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-        <p className="text-sm">Song not found</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={song.nickname || song.displayTitle}>
-          {song.nickname || song.displayTitle}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={song.displayArtist}>
-          {song.displayArtist}
-        </p>
-      </div>
-
-      <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/40 p-3 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-          Labels
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {(labelsBySongId[songId] ?? []).map((labelId) => (
-            <span
-              key={labelId}
-              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-full"
-            >
-              {labelsById[labelId]?.name ?? labelId}
-            </span>
-          ))}
-          {(labelsBySongId[songId] ?? []).length === 0 && (
-            <span className="text-sm text-gray-500 dark:text-gray-400">No labels</span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function AddLabelForm() {
   const addLabel = useStore((state) => state.addLabel);

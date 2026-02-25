@@ -9,6 +9,7 @@
 
 import Library from '../models/Library.js';
 import Song from '../models/Song.js';
+import SongSource from '../models/SongSource.js';
 import Label from '../models/Label.js';
 import SongLabel from '../models/SongLabel.js';
 import SuperLabelComponent from '../models/SuperLabelComponent.js';
@@ -50,6 +51,7 @@ export async function getBootstrap(libraryId) {
   // Step 2: Fetch all library-scoped data in parallel
   const [
     songs,
+    songSources,
     labels,
     songLabels,
     superLabelComponents,
@@ -57,6 +59,7 @@ export async function getBootstrap(libraryId) {
     labelModeLabels,
   ] = await Promise.all([
     Song.find({ libraryId }).lean(),
+    SongSource.find({ libraryId }).lean(),
     Label.find({ libraryId }).lean(),
     SongLabel.find({ libraryId }).lean(),
     SuperLabelComponent.find({ libraryId }).lean(),
@@ -68,6 +71,7 @@ export async function getBootstrap(libraryId) {
   return {
     library,
     songs: songs.map(normalizeSongForResponse),
+    songSources,
     labels,
     songLabels,
     superLabelComponents,

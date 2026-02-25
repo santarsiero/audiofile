@@ -16,6 +16,7 @@ import type {
   SongId,
   LabelId,
   SongLabel,
+  SongSource,
 } from './entities';
 
 // =============================================================================
@@ -65,6 +66,7 @@ export interface ListLibrariesResponse {
 export interface LibraryBootstrapResponse {
   library: Library;
   songs: Song[];
+  songSources: SongSource[];
   labels: Label[];
   superLabels: SuperLabel[];
   songLabels: SongLabel[];
@@ -167,6 +169,17 @@ export interface CreateSuperLabelResponse {
 export interface DeleteLabelResponse {
   success: boolean;
   deletedLabelId: LabelId;
+}
+
+/** PUT /labels/:id request */
+export interface UpdateLabelRequest {
+  description?: string;
+  metadata?: Record<string, unknown>;
+}
+
+/** PUT /labels/:id response */
+export interface UpdateLabelResponse {
+  label: Label;
 }
 
 // =============================================================================

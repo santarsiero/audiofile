@@ -119,6 +119,8 @@ export interface Label {
   normName: string;
   type: LabelType;
   color: string | null;
+  description: string;
+  metadata: Record<string, unknown>;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -162,6 +164,18 @@ export interface SongLabel {
   songId: SongId;
   labelId: LabelId;
   libraryId: LibraryId;
+}
+
+export interface SongSource {
+  libraryId: LibraryId;
+  sourceId: string;
+  songId: SongId;
+  providerType: string;
+  externalId: string;
+  uri: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**

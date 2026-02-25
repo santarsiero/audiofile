@@ -71,6 +71,12 @@ songSourceSchema.index(
   { unique: true }
 );
 
+// A provider track cannot map to multiple Songs within the same library
+songSourceSchema.index(
+  { libraryId: 1, providerType: 1, externalId: 1 },
+  { unique: true }
+);
+
 // Prevent model overwrite during hot reload
 const SongSource = mongoose.models.SongSource || mongoose.model('SongSource', songSourceSchema);
 

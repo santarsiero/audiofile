@@ -196,6 +196,21 @@ export function Canvas() {
     [handleWindowPointerMove, pushUndoEntry]
   );
 
+  const parseSafariPlainTextDrop = useCallback((event: React.DragEvent) => {
+    const plain = event.dataTransfer.getData('text/plain');
+    if (!plain) return { songId: null as SongId | null, labelId: null as LabelId | null };
+
+    if (plain.startsWith('song:')) {
+      return { songId: plain.slice('song:'.length) as SongId, labelId: null };
+    }
+
+    if (plain.startsWith('label:')) {
+      return { songId: null, labelId: plain.slice('label:'.length) as LabelId };
+    }
+
+    return { songId: null, labelId: null };
+  }, []);
+
   const cancelDrag = useCallback(() => {
     dragStateRef.current = null;
     window.removeEventListener('pointermove', handleWindowPointerMove);
@@ -284,7 +299,7 @@ export function Canvas() {
 
   const handleCanvasDragOver = useCallback((event: React.DragEvent) => {
     const types = event.dataTransfer.types;
-    if (types.includes(DND_SONG_MIME) || types.includes(DND_LABEL_MIME)) {
+    if (types.includes(DND_SONG_MIME) || types.includes(DND_LABEL_MIME) || types.includes('text/plain')) {
       event.preventDefault();
       event.dataTransfer.dropEffect = 'copy';
     }
@@ -295,8 +310,14 @@ export function Canvas() {
       const container = containerRef.current;
       if (!container) return;
 
-      const songId = event.dataTransfer.getData(DND_SONG_MIME) as SongId;
-      const labelId = event.dataTransfer.getData(DND_LABEL_MIME) as LabelId;
+      let songId = event.dataTransfer.getData(DND_SONG_MIME) as SongId;
+      let labelId = event.dataTransfer.getData(DND_LABEL_MIME) as LabelId;
+
+      if (!songId && !labelId) {
+        const parsed = parseSafariPlainTextDrop(event);
+        songId = (parsed.songId ?? '') as SongId;
+        labelId = (parsed.labelId ?? '') as LabelId;
+      }
       if (!songId && !labelId) return;
 
       event.preventDefault();
@@ -320,13 +341,18 @@ export function Canvas() {
       addSongInstance,
       createSnapshot,
       getCanvasDropPosition,
+      parseSafariPlainTextDrop,
       pushUndoEntry,
     ]
   );
 
   const handleSongDrop = useCallback(
     async (event: React.DragEvent, songId: SongId, instanceId: string) => {
-      const labelId = event.dataTransfer.getData(DND_LABEL_MIME) as LabelId;
+      let labelId = event.dataTransfer.getData(DND_LABEL_MIME) as LabelId;
+      if (!labelId) {
+        const parsed = parseSafariPlainTextDrop(event);
+        labelId = (parsed.labelId ?? '') as LabelId;
+      }
       if (!labelId) return;
 
       event.preventDefault();
@@ -340,11 +366,11 @@ export function Canvas() {
       const songIdsToApply = shouldApplyToSelection ? selectedSongIds : [songId];
       await applyLabelToSongs(songIdsToApply, labelId, snapshot);
     },
-    [applyLabelToSongs, createSnapshot, selectedSongItems]
+    [applyLabelToSongs, createSnapshot, parseSafariPlainTextDrop, selectedSongItems]
   );
 
   const handleSongDragOver = useCallback((event: React.DragEvent) => {
-    if (event.dataTransfer.types.includes(DND_LABEL_MIME)) {
+    if (event.dataTransfer.types.includes(DND_LABEL_MIME) || event.dataTransfer.types.includes('text/plain')) {
       event.preventDefault();
       event.dataTransfer.dropEffect = 'copy';
     }

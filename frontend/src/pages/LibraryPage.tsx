@@ -33,6 +33,7 @@ export function LibraryPage() {
     setLabels,
     setSongLabels,
     setModes,
+    setSongSources,
   } = useStore((state) => ({
     isBootstrapping: state.isBootstrapping,
     bootstrapError: state.bootstrapError,
@@ -43,6 +44,7 @@ export function LibraryPage() {
     setBootstrapped: state.setBootstrapped,
     setBootstrapError: state.setBootstrapError,
     setSongs: state.setSongs,
+    setSongSources: state.setSongSources,
     setLabels: state.setLabels,
     setSongLabels: state.setSongLabels,
     setModes: state.setModes,
@@ -82,6 +84,7 @@ export function LibraryPage() {
         setBootstrapError(null);
         setLibraryData(data.library);
         setSongs(data.songs ?? []);
+        setSongSources(data.songSources ?? []);
         setLabels(data.labels ?? [], data.superLabels ?? []);
         setSongLabels(data.songLabels ?? []);
         setModes(data.labelModes ?? []);
@@ -110,6 +113,7 @@ export function LibraryPage() {
     setBootstrapped,
     setLibraryData,
     setSongs,
+    setSongSources,
     setLabels,
     setSongLabels,
     setModes,
