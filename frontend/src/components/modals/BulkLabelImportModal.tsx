@@ -96,8 +96,8 @@ export function BulkLabelImportModal({ isOpen, onClose }: Props) {
         }
       }}
     >
-      <div className="bg-neutral-900 rounded-xl p-6 w-[500px] max-h-[80vh] overflow-y-auto border border-gray-800 shadow-lg">
-        <div className="text-lg font-semibold text-white">Bulk Import Labels</div>
+      <div className="bg-neutral-900 rounded-xl p-6 w-[500px] max-h-[80vh] overflow-y-auto border border-neutral-750 shadow-af-lg">
+        <div className="text-lg font-semibold text-neutral-100">Bulk Import Labels</div>
 
         <div className="mt-4 space-y-2">
           <input
@@ -105,10 +105,10 @@ export function BulkLabelImportModal({ isOpen, onClose }: Props) {
             type="file"
             accept=".json"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-gray-200 file:mr-4 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-800 file:text-gray-200 hover:file:bg-gray-700"
+            className="block w-full text-sm text-neutral-200 file:mr-4 file:py-2 file:px-3 file:rounded-af-md file:border-0 file:text-sm file:font-medium file:bg-neutral-800 file:text-neutral-200 hover:file:bg-neutral-700"
             disabled={loading}
           />
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-neutral-500">
             {file ? `Selected: ${file.name}` : 'No file selected'}
           </div>
         </div>
@@ -118,7 +118,7 @@ export function BulkLabelImportModal({ isOpen, onClose }: Props) {
             type="button"
             onClick={handleClose}
             disabled={loading}
-            className="px-3 py-2 text-sm rounded-md border border-gray-700 text-gray-200 hover:bg-gray-800 disabled:opacity-40"
+            className="px-3 py-2 text-sm rounded-af-md border border-neutral-750 text-neutral-200 hover:bg-neutral-800 disabled:opacity-40"
           >
             Cancel
           </button>
@@ -126,7 +126,7 @@ export function BulkLabelImportModal({ isOpen, onClose }: Props) {
             type="button"
             onClick={() => void handleImport()}
             disabled={loading || !file}
-            className="px-3 py-2 text-sm rounded-md border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+            className="px-3 py-2 text-sm rounded-af-md border border-neutral-600 bg-neutral-700 text-neutral-100 hover:bg-neutral-600 disabled:opacity-40"
           >
             {loading ? 'Importing…' : 'Import'}
           </button>

@@ -428,13 +428,13 @@ function LabelInfo() {
           <div className="flex items-center justify-between gap-3">
             <span className="text-af-xs text-neutral-600">Created</span>
             <span className="text-af-xs text-neutral-400 truncate" title={label.createdAt}>
-              {label.createdAt}
+              {new Date(label.createdAt).toLocaleString()}
             </span>
           </div>
           <div className="flex items-center justify-between gap-3">
             <span className="text-af-xs text-neutral-600">Updated</span>
             <span className="text-af-xs text-neutral-400 truncate" title={label.updatedAt}>
-              {label.updatedAt}
+              {new Date(label.updatedAt).toLocaleString()}
             </span>
           </div>
         </div>

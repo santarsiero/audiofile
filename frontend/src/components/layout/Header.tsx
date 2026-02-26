@@ -94,7 +94,7 @@ export function Header() {
             onClick={() => setIsLogoutConfirmOpen(false)}
           />
           <div className="relative w-full max-w-sm mx-4 rounded-af-xl border border-neutral-750 bg-neutral-850 shadow-af-float p-5">
-            <div className="text-sm font-semibold text-gray-100">Log out of AudioFile?</div>
+            <div className="text-sm font-semibold text-neutral-100">Log out of AudioFile?</div>
             <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 className="rounded-af-md border border-neutral-700 bg-transparent px-3 py-2 text-sm font-medium text-neutral-300 hover:bg-neutral-800 transition-colors duration-af-fast"
@@ -158,7 +158,7 @@ export function Header() {
               className="w-full h-9 px-4 pr-10 text-sm bg-neutral-800 border border-neutral-750 rounded-af-lg text-neutral-100 placeholder:text-neutral-500 focus:ring-1 focus:ring-neutral-600 focus:outline-none"
             />
             <svg
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

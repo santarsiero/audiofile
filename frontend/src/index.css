@@ -97,7 +97,7 @@ body {
 .song-card {
   @apply bg-surface-panel;
   @apply rounded-af-md shadow-af-sm;
-  @apply transition-shadow duration-150;
+  @apply transition-all duration-150;
 }
 
 .song-card:hover {
@@ -115,6 +115,7 @@ body {
   @apply text-xs font-medium;
   @apply bg-neutral-800 text-neutral-200;
   @apply border border-neutral-700;
+  @apply transition-colors duration-150;
 }
 
 .label-pill.super {

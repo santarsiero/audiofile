@@ -223,7 +223,7 @@ function SongInfo() {
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-gray-100 dark:bg-gray-800" />
+          <div className="w-full h-full bg-neutral-800" />
         )}
       </div>
 

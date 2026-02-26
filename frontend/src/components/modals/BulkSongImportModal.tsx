@@ -128,8 +128,8 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
         }
       }}
     >
-      <div className="bg-neutral-900 rounded-xl p-6 w-[500px] max-h-[80vh] overflow-y-auto border border-gray-800 shadow-lg">
-        <div className="text-lg font-semibold text-white">Bulk Import Songs</div>
+      <div className="bg-neutral-900 rounded-xl p-6 w-[500px] max-h-[80vh] overflow-y-auto border border-neutral-750 shadow-af-lg">
+        <div className="text-lg font-semibold text-neutral-100">Bulk Import Songs</div>
 
         <div className="mt-4 space-y-2">
           <input
@@ -137,21 +137,21 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
             type="file"
             accept=".json"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-gray-200 file:mr-4 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-800 file:text-gray-200 hover:file:bg-gray-700"
+            className="block w-full text-sm text-neutral-200 file:mr-4 file:py-2 file:px-3 file:rounded-af-md file:border-0 file:text-sm file:font-medium file:bg-neutral-800 file:text-neutral-200 hover:file:bg-neutral-700"
             disabled={loading}
           />
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-neutral-500">
             {file ? `Selected: ${file.name}` : 'No file selected'}
           </div>
         </div>
 
         <div className="mt-6">
-          <div className="text-sm font-semibold text-gray-200">Assign Labels to All Imported Songs</div>
+          <div className="text-sm font-semibold text-neutral-200">Assign Labels to All Imported Songs</div>
           <input
             value={labelSearch}
             onChange={(e) => setLabelSearch(e.target.value)}
             placeholder="Search labels…"
-            className="mt-2 w-full h-9 px-3 text-sm bg-gray-800 text-gray-100 border border-gray-700 rounded-md"
+            className="mt-2 w-full h-9 px-3 text-sm bg-neutral-800 text-neutral-100 border border-neutral-750 rounded-af-md placeholder:text-neutral-500 focus:ring-1 focus:ring-neutral-400 focus:border-neutral-500 focus:outline-none"
             disabled={loading}
           />
 
@@ -166,8 +166,8 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
                   disabled={loading}
                   className={
                     selected
-                      ? 'px-3 py-1.5 text-xs rounded-full border border-blue-500 bg-blue-600/30 text-blue-100'
-                      : 'px-3 py-1.5 text-xs rounded-full border border-gray-700 bg-gray-800 text-gray-200 hover:bg-gray-700'
+                      ? 'px-3 py-1.5 text-xs rounded-af-pill border border-neutral-400 bg-neutral-700 text-neutral-100 ring-1 ring-neutral-400'
+                      : 'px-3 py-1.5 text-xs rounded-af-pill border border-neutral-700 bg-neutral-800 text-neutral-200 hover:bg-neutral-700'
                   }
                 >
                   {label.name}
@@ -177,7 +177,7 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
           </div>
 
           {selectedLabelIds.size > 0 ? (
-            <div className="mt-2 text-xs text-gray-400">
+            <div className="mt-2 text-xs text-neutral-500">
               Selected: {selectedLabelIds.size}
             </div>
           ) : null}
@@ -188,7 +188,7 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
             type="button"
             onClick={handleClose}
             disabled={loading}
-            className="px-3 py-2 text-sm rounded-md border border-gray-700 text-gray-200 hover:bg-gray-800 disabled:opacity-40"
+            className="px-3 py-2 text-sm rounded-af-md border border-neutral-750 text-neutral-200 hover:bg-neutral-800 disabled:opacity-40"
           >
             Cancel
           </button>
@@ -196,7 +196,7 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
             type="button"
             onClick={() => void handleImport()}
             disabled={loading || !file}
-            className="px-3 py-2 text-sm rounded-md border border-blue-600 bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+            className="px-3 py-2 text-sm rounded-af-md border border-neutral-600 bg-neutral-700 text-neutral-100 hover:bg-neutral-600 disabled:opacity-40"
           >
             {loading ? 'Importing…' : 'Import'}
           </button>

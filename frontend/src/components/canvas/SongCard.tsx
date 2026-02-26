@@ -74,7 +74,7 @@ export function SongCard({ item }: SongCardProps) {
       </div>
       
       {/* Song info */}
-      <div className="space-y-0.5">
+      <div className="space-y-1">
         <h3 className="text-sm font-medium text-neutral-100 truncate" title={primaryText}>
           <span className="inline-flex items-center gap-2">
             {isPlaying ? (
