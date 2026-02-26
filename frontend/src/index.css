@@ -47,7 +47,7 @@ html {
 
 body {
   @apply bg-canvas-light dark:bg-canvas-dark;
-  @apply text-gray-900 dark:text-gray-100;
+  @apply text-neutral-900 dark:text-neutral-100;
   @apply antialiased;
 }
 
@@ -66,11 +66,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+  @apply bg-neutral-700 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400 dark:bg-gray-600;
+  @apply bg-neutral-600;
 }
 
 /* ============================================================================
@@ -90,44 +90,44 @@ body {
 /* Panel utilities */
 .panel {
   @apply bg-panel-light dark:bg-panel-dark;
-  @apply border-r border-gray-200 dark:border-gray-800;
+  @apply border-r border-neutral-750;
 }
 
 /* Song card utilities */
 .song-card {
-  @apply bg-white dark:bg-gray-800;
-  @apply rounded-lg shadow-sm;
+  @apply bg-surface-panel;
+  @apply rounded-af-md shadow-af-sm;
   @apply transition-shadow duration-150;
 }
 
 .song-card:hover {
-  @apply shadow-md;
+  @apply shadow-af-md;
 }
 
 .song-card.selected {
-  @apply ring-2 ring-blue-500;
+  @apply ring-2 ring-neutral-400;
 }
 
 /* Label pill utilities */
 .label-pill {
   @apply inline-flex items-center;
-  @apply px-2 py-0.5 rounded-full;
+  @apply px-3 py-1 rounded-af-pill;
   @apply text-xs font-medium;
-  @apply bg-gray-100 dark:bg-gray-700;
-  @apply text-gray-700 dark:text-gray-300;
+  @apply bg-neutral-800 text-neutral-200;
+  @apply border border-neutral-700;
 }
 
 .label-pill.super {
-  @apply bg-purple-100 dark:bg-purple-900;
-  @apply text-purple-700 dark:text-purple-300;
+  @apply bg-neutral-700 text-neutral-100;
+  @apply border-neutral-600;
 }
 
 .label-pill.selected {
-  @apply ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200;
+  @apply ring-2 ring-neutral-400 bg-neutral-700 text-neutral-100;
 }
 
 /* Focus utilities (accessibility) */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
-  @apply dark:focus:ring-offset-gray-900;
+  @apply focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2;
+  @apply dark:focus:ring-offset-neutral-950;
 }

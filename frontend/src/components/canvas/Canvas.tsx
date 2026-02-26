@@ -713,7 +713,7 @@ export function Canvas() {
           {/* Empty state */}
           {SHOW_CANVAS_EMPTY_STATE && items.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center min-h-[400px] min-w-[600px]">
-              <div className="text-center text-gray-400 dark:text-gray-600">
+              <div className="text-center text-neutral-600">
                 <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                 </svg>
@@ -733,7 +733,7 @@ export function Canvas() {
         <div className="flex gap-2">
           <button
             type="button"
-            className="pointer-events-auto px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 disabled:opacity-40"
+            className="pointer-events-auto px-3 py-1.5 text-sm rounded-af-md border border-neutral-750 bg-neutral-900/80 text-neutral-200 hover:bg-neutral-800/80 disabled:opacity-40"
             onClick={() => void handleUndoAction()}
             disabled={undoStackLength === 0}
           >
@@ -741,7 +741,7 @@ export function Canvas() {
           </button>
           <button
             type="button"
-            className="pointer-events-auto px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 disabled:opacity-40"
+            className="pointer-events-auto px-3 py-1.5 text-sm rounded-af-md border border-neutral-750 bg-neutral-900/80 text-neutral-200 hover:bg-neutral-800/80 disabled:opacity-40"
             onClick={() => void handleRedoAction()}
             disabled={redoStackLength === 0}
           >
@@ -750,7 +750,7 @@ export function Canvas() {
         </div>
         <button
           type="button"
-          className="pointer-events-auto px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 disabled:opacity-40"
+          className="pointer-events-auto px-3 py-1.5 text-sm rounded-af-md border border-neutral-750 bg-neutral-900/80 text-neutral-200 hover:bg-neutral-800/80 disabled:opacity-40"
           onClick={handleCopySelection}
           disabled={selectedItems.length === 0}
         >
@@ -758,7 +758,7 @@ export function Canvas() {
         </button>
         <button
           type="button"
-          className="pointer-events-auto px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white/90 dark:bg-gray-900/80 text-gray-700 dark:text-gray-200 disabled:opacity-40"
+          className="pointer-events-auto px-3 py-1.5 text-sm rounded-af-md border border-neutral-750 bg-neutral-900/80 text-neutral-200 hover:bg-neutral-800/80 disabled:opacity-40"
           onClick={deleteSelectedInstances}
           disabled={selectedItems.length === 0}
         >

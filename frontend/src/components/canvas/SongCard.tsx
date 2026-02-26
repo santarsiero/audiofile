@@ -50,12 +50,12 @@ export function SongCard({ item }: SongCardProps) {
       onDoubleClick={handleDoubleClick}
       className={`
         song-card w-[180px] h-[220px] p-3 cursor-pointer
-        ${isActive ? 'ring-2 ring-blue-500 bg-blue-500/5' : ''}
+        ${isActive ? 'ring-2 ring-neutral-400 bg-neutral-700/20' : ''}
         ${item.isSelected ? 'selected' : ''}
       `}
     >
       {/* Album artwork */}
-      <div className="w-full aspect-square mb-3 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
+      <div className="w-full aspect-square mb-3 bg-neutral-800 rounded-af-md overflow-hidden">
         {song.albumArtUrl && !hasArtError ? (
           <img
             src={song.albumArtUrl}
@@ -65,7 +65,7 @@ export function SongCard({ item }: SongCardProps) {
             onError={() => setHasArtError(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+          <div className="w-full h-full flex items-center justify-center text-neutral-600">
             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
             </svg>
@@ -75,21 +75,20 @@ export function SongCard({ item }: SongCardProps) {
       
       {/* Song info */}
       <div className="space-y-0.5">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate" title={primaryText}>
+        <h3 className="text-sm font-medium text-neutral-100 truncate" title={primaryText}>
           <span className="inline-flex items-center gap-2">
             {isPlaying ? (
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+              <span className="text-xs font-semibold text-neutral-400">
                 Playing
               </span>
             ) : null}
             {primaryText}
           </span>
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate" title={secondaryText}>
+        <p className="text-xs text-neutral-500 truncate" title={secondaryText}>
           {secondaryText}
         </p>
       </div>
     </div>
   );
 }
-
