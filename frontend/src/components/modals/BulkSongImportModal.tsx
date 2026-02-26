@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@/store';
-import { songApi } from '@/services/songApi';
+import { providerApi } from '@/services/providerApi';
 import * as libraryApi from '@/services/libraryApi';
 
 type Props = {
@@ -24,6 +24,16 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
   const [labelSearch, setLabelSearch] = useState('');
   const [selectedLabelIds, setSelectedLabelIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<{ processed: number; total: number } | null>(null);
+  const [report, setReport] = useState<
+    | {
+        total: number;
+        imported: number;
+        duplicates: number;
+        missed: Array<{ title: unknown; artist: unknown; reason: string }>;
+      }
+    | null
+  >(null);
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -33,6 +43,8 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
       setLabelSearch('');
       setSelectedLabelIds(new Set());
       setLoading(false);
+      setProgress(null);
+      setReport(null);
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -70,6 +82,24 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
     });
   };
 
+  const normalize = (value: unknown): string => {
+    if (typeof value !== 'string') return '';
+    return value
+      .toLowerCase()
+      .replace(/\(.*?\)/g, ' ')
+      .replace(/\[.*?\]/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
+  };
+
+  const makeNormKey = (title: unknown, artist: unknown): string => {
+    const t = normalize(title);
+    const a = normalize(artist);
+    if (!t || !a) return '';
+    return `${t}::${a}`;
+  };
+
   const handleImport = async () => {
     if (!activeLibraryId) {
       window.alert('No active library selected.');
@@ -82,6 +112,8 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
     }
 
     setLoading(true);
+    setProgress(null);
+    setReport(null);
 
     try {
       const text = await file.text();
@@ -99,8 +131,82 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
         return;
       }
 
-      const applyLabelIds = Array.from(selectedLabelIds);
-      await songApi.bulkImport(items, applyLabelIds);
+      const total = items.length;
+      setProgress({ processed: 0, total });
+
+      const starterLabelIds = Array.from(selectedLabelIds);
+
+      let imported = 0;
+      let duplicates = 0;
+      const missed: Array<{ title: unknown; artist: unknown; reason: string }> = [];
+
+      for (let index = 0; index < items.length; index += 1) {
+        const input = items[index] as Record<string, unknown> | null;
+        const title = input && typeof input === 'object' ? input.title : undefined;
+        const artist = input && typeof input === 'object' ? input.artist : undefined;
+        const providerTrackId = input && typeof input === 'object' ? input.providerTrackId : undefined;
+
+        try {
+          const normKey = makeNormKey(title, artist);
+
+          if (typeof providerTrackId === 'string' && providerTrackId.trim().length > 0) {
+            const result = await providerApi.importProviderTrackToLibrary({
+              libraryId: activeLibraryId,
+              providerType: 'SPOTIFY',
+              providerTrackId: providerTrackId.trim(),
+              starterLabelIds,
+            });
+
+            if (result.created) {
+              imported += 1;
+            } else {
+              duplicates += 1;
+            }
+          } else {
+            if (!normKey) {
+              missed.push({ title, artist, reason: 'Missing required title and/or artist' });
+            } else {
+              const query = `${typeof title === 'string' ? title : ''} ${typeof artist === 'string' ? artist : ''}`.trim();
+              const search = await providerApi.searchProviders({
+                providerType: 'SPOTIFY',
+                query,
+              });
+
+              const results = Array.isArray(search?.results) ? search.results : [];
+              const match = results.find((r) => makeNormKey(r.title, r.artist) === normKey);
+
+              if (!match) {
+                missed.push({ title, artist, reason: 'No Spotify match found' });
+              } else {
+                const result = await providerApi.importProviderTrackToLibrary({
+                  libraryId: activeLibraryId,
+                  providerType: 'SPOTIFY',
+                  providerTrackId: match.providerTrackId,
+                  starterLabelIds,
+                });
+
+                if (result.created) {
+                  imported += 1;
+                } else {
+                  duplicates += 1;
+                }
+              }
+            }
+          }
+        } catch (error) {
+          const reason = error instanceof Error ? error.message : 'Unknown error';
+          missed.push({ title, artist, reason });
+        } finally {
+          setProgress({ processed: index + 1, total });
+        }
+      }
+
+      setReport({
+        total,
+        imported,
+        duplicates,
+        missed,
+      });
 
       const data = await libraryApi.bootstrapLibrary(activeLibraryId);
       setLibraryData(data.library);
@@ -110,7 +216,10 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
       setSongLabels(data.songLabels ?? []);
       setModes(data.labelModes ?? []);
 
-      onClose();
+      if (missed.length === 0) {
+        window.alert('All songs imported successfully.');
+        onClose();
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to import songs.';
       window.alert(message);
@@ -130,6 +239,57 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
     >
       <div className="bg-neutral-900 rounded-xl p-6 w-[500px] max-h-[80vh] overflow-y-auto border border-neutral-750 shadow-af-lg">
         <div className="text-lg font-semibold text-neutral-100">Bulk Import Songs</div>
+
+        {progress ? (
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-xs text-neutral-500">
+              <span>
+                Processed: {progress.processed} / {progress.total}
+              </span>
+              <span>
+                {progress.total > 0
+                  ? `${Math.round((progress.processed / progress.total) * 100)}%`
+                  : '0%'}
+              </span>
+            </div>
+            <div className="mt-2 h-2 w-full rounded-af-pill bg-neutral-800 overflow-hidden border border-neutral-750">
+              <div
+                className="h-full bg-neutral-500"
+                style={{
+                  width:
+                    progress.total > 0
+                      ? `${Math.min(100, Math.round((progress.processed / progress.total) * 100))}%`
+                      : '0%',
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {report ? (
+          <div className="mt-4 rounded-af-md border border-neutral-750 bg-neutral-900/40 p-3">
+            <div className="text-sm font-semibold text-neutral-200">Import Report</div>
+            <div className="mt-2 text-xs text-neutral-500 space-y-1">
+              <div>Total: {report.total}</div>
+              <div>Imported: {report.imported}</div>
+              <div>Duplicates: {report.duplicates}</div>
+              <div>Missed/Errors: {report.missed.length}</div>
+            </div>
+            {report.missed.length > 0 ? (
+              <div className="mt-3 max-h-40 overflow-y-auto rounded-af-md border border-neutral-750 bg-neutral-950/30 p-2">
+                <div className="text-xs font-semibold text-neutral-300">Missed</div>
+                <div className="mt-2 space-y-1">
+                  {report.missed.slice(0, 200).map((m, idx) => (
+                    <div key={idx} className="text-xs text-neutral-500">
+                      {typeof m.title === 'string' ? m.title : String(m.title ?? '')} —{' '}
+                      {typeof m.artist === 'string' ? m.artist : String(m.artist ?? '')}: {m.reason}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="mt-4 space-y-2">
           <input
