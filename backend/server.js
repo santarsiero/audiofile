@@ -44,7 +44,7 @@ app.get("/health", (req, res) => {
   res.json({ ok: true, service: "audiofile-backend" });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
 if (!MONGODB_URI) {

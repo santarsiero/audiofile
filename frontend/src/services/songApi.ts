@@ -115,7 +115,8 @@ export async function bulkImportSongs(items: unknown[], applyLabelIds?: string[]
     {
       items,
       ...(Array.isArray(applyLabelIds) ? { applyLabelIds } : {}),
-    }
+    },
+    { timeout: 120000 }
   );
 }
 

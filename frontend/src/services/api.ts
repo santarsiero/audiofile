@@ -317,15 +317,27 @@ export const apiClient = {
   /**
    * POST request
    */
-  post<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>('POST', path, { body });
+  post<T>(
+    path: string,
+    body?: unknown,
+    options?: {
+      timeout?: number;
+    }
+  ): Promise<T> {
+    return request<T>('POST', path, { body, timeout: options?.timeout });
   },
   
   /**
    * PUT request
    */
-  put<T>(path: string, body?: unknown): Promise<T> {
-    return request<T>('PUT', path, { body });
+  put<T>(
+    path: string,
+    body?: unknown,
+    options?: {
+      timeout?: number;
+    }
+  ): Promise<T> {
+    return request<T>('PUT', path, { body, timeout: options?.timeout });
   },
   
   /**

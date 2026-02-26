@@ -134,7 +134,8 @@ export async function bulkImportLabels(items: unknown[]): Promise<unknown> {
 
   return apiClient.post<unknown>(
     `libraries/${activeLibraryId}/labels/bulk-import`,
-    { items }
+    { items },
+    { timeout: 120000 }
   );
 }
 
