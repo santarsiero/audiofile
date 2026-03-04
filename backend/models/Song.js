@@ -60,6 +60,18 @@ const songSchema = new mongoose.Schema(
       default: null,
       trim: true,
     },
+    spotifyTrackId: {
+      type: String,
+      default: null,
+      trim: true,
+      index: true,
+    },
+    appleMusicSongId: {
+      type: String,
+      default: null,
+      trim: true,
+      index: true,
+    },
     normTitle: {
       type: String,
       required: true,

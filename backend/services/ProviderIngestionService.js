@@ -200,6 +200,11 @@ export async function importSingleTrack({
     throw error;
   }
 
+  await Song.updateOne(
+    { libraryId: libraryId.trim(), songId },
+    { $set: { spotifyTrackId: externalId } }
+  );
+
   if (Array.isArray(starterLabelIds) && starterLabelIds.length > 0) {
     for (const labelId of starterLabelIds) {
       if (typeof labelId !== 'string' || labelId.trim().length === 0) {
