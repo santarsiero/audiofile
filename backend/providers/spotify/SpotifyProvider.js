@@ -193,6 +193,101 @@ export class SpotifyProvider extends ProviderInterface {
     return this._normalizeTrack(payload);
   }
 
+  async getPlaylistTrackIds(playlistId) {
+    if (typeof playlistId !== 'string' || playlistId.trim().length === 0) {
+      throw new ProviderError({
+        providerType: SPOTIFY,
+        stage: 'input',
+        reason: 'Missing required playlistId',
+        raw: { playlistId: playlistId ?? null },
+      });
+    }
+
+    const accessToken = await this._getAccessToken();
+    const id = playlistId.trim();
+
+    const trackIds = [];
+    let offset = 0;
+    const limit = 100;
+
+    for (;;) {
+      const url = new URL(`https://api.spotify.com/v1/playlists/${encodeURIComponent(id)}/tracks`);
+      url.searchParams.set('limit', String(limit));
+      url.searchParams.set('offset', String(offset));
+      url.searchParams.set('fields', 'items(track(id)),next,total');
+
+      let res;
+      try {
+        res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/json',
+          },
+        });
+      } catch (err) {
+        throw new ProviderError({
+          providerType: SPOTIFY,
+          stage: 'network',
+          reason: 'Spotify playlist tracks request failed',
+          raw: { message: err?.message },
+        });
+      }
+
+      let payload;
+      try {
+        payload = await res.json();
+      } catch {
+        payload = null;
+      }
+
+      if (!res.ok) {
+        const spotifyMessage =
+          payload && typeof payload === 'object'
+            ? payload?.error?.message ?? payload?.error_description ?? payload?.error
+            : undefined;
+
+        const stage = res.status === 401 || res.status === 403 ? 'auth' : 'provider';
+
+        throw new ProviderError({
+          providerType: SPOTIFY,
+          stage,
+          reason: stage === 'auth' ? 'Spotify playlist unauthorized' : 'Spotify playlist request rejected',
+          raw: {
+            status: res.status,
+            spotifyMessage,
+            playlistId: id,
+            offset,
+            limit,
+          },
+        });
+      }
+
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      for (const item of items) {
+        const tid = item?.track?.id;
+        if (typeof tid === 'string' && tid.trim().length > 0) {
+          trackIds.push(tid.trim());
+        }
+      }
+
+      const total = typeof payload?.total === 'number' ? payload.total : null;
+      offset += limit;
+
+      if (payload?.next) {
+        continue;
+      }
+
+      if (typeof total === 'number' && trackIds.length < total) {
+        continue;
+      }
+
+      break;
+    }
+
+    return trackIds;
+  }
+
   async _getAccessToken() {
     const now = Date.now();
     const safetyBufferMs = 30_000;

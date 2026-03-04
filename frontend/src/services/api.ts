@@ -67,7 +67,27 @@ async function parseErrorResponse(response: Response): Promise<ApiError> {
   try {
     const data = await response.json();
     if (data.error) {
-      return data.error as ApiError;
+      if (typeof data.error === 'string') {
+        return {
+          code: 'REQUEST_FAILED',
+          message: data.error,
+        };
+      }
+
+      if (typeof data.error === 'object') {
+        const errorObj = data.error as Partial<ApiError>;
+        return {
+          code: typeof errorObj.code === 'string' ? errorObj.code : 'REQUEST_FAILED',
+          message:
+            typeof errorObj.message === 'string'
+              ? errorObj.message
+              : response.statusText || 'Request failed',
+          details:
+            errorObj.details && typeof errorObj.details === 'object'
+              ? (errorObj.details as Record<string, unknown>)
+              : undefined,
+        };
+      }
     }
     return {
       code: 'UNKNOWN_ERROR',

@@ -10,6 +10,7 @@ import { importSingleTrack } from '../services/ProviderIngestionService.js';
 import { bulkImportSongs } from '../services/BulkIngestionService.js';
 import { bulkImportLabels } from '../services/BulkLabelService.js';
 import { bulkImportSongs as bulkImportCanonicalSongs } from '../services/BulkSongService.js';
+import { importPublicSpotifyPlaylist } from '../services/SpotifyPlaylistImportService.js';
 import songsRouter from './songs.js'; 
 import labelsRouter from './labels.js'; 
 import taggingRouter from './tagging.js';
@@ -166,6 +167,38 @@ router.post('/:libraryId/providers/bulk-import', async (req, res) => {
       libraryId,
       providerType,
       items,
+      applyLabelIds,
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof ProviderError) {
+      return res.status(400).json({ error: error.toJSON() });
+    }
+
+    if (typeof error?.status === 'number') {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: error?.message || 'Internal server error' });
+  }
+});
+
+router.post('/:libraryId/providers/spotify/import-playlist', async (req, res) => {
+  try {
+    const { libraryId } = req.params;
+    const { playlistUrlOrId, applyLabelIds } = req.body || {};
+
+    const playlistOk = typeof playlistUrlOrId === 'string' && playlistUrlOrId.trim().length > 0;
+    const applyLabelIdsOk = applyLabelIds === undefined || Array.isArray(applyLabelIds);
+
+    if (!playlistOk || !applyLabelIdsOk) {
+      return res.status(400).json({ error: 'Invalid request body' });
+    }
+
+    const result = await importPublicSpotifyPlaylist({
+      libraryId,
+      playlistUrlOrId,
       applyLabelIds,
     });
 

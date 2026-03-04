@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
 import { authApi } from '@/services/authApi';
 import { setAccessToken, setRefreshToken } from '@/services/authTokens';
+import { isApiClientError } from '@/services/api';
 
 export function Login() {
   const navigate = useNavigate();
@@ -56,7 +57,11 @@ export function Login() {
       setAccessToken(null);
       setRefreshToken(null);
       setAuthenticated(false);
-      setError(err instanceof Error ? err.message : 'Login failed');
+      if (isApiClientError(err) && err.status === 401) {
+        setError('Invalid email or password.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Login failed');
+      }
     } finally {
       setIsSubmitting(false);
     }

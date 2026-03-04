@@ -21,16 +21,33 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
   const setModes = useStore((state) => state.setModes);
 
   const [file, setFile] = useState<File | null>(null);
+  const [playlistUrlOrId, setPlaylistUrlOrId] = useState('');
   const [labelSearch, setLabelSearch] = useState('');
   const [selectedLabelIds, setSelectedLabelIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<{ processed: number; total: number } | null>(null);
   const [report, setReport] = useState<
     | {
-        total: number;
-        imported: number;
-        duplicates: number;
-        missed: Array<{ title: unknown; artist: unknown; reason: string }>;
+        summary: {
+          total: number;
+          imported: number;
+          duplicates: number;
+          exactMatches: number;
+          fuzzyMatches: number;
+          misses: number;
+          missingFields: number;
+          errors: number;
+        };
+        results: Array<{
+          input: {
+            title: unknown;
+            artist: unknown;
+            spotifyTrackId: unknown;
+            appleMusicSongId: unknown;
+          };
+          status: string;
+          match: unknown;
+        }>;
       }
     | null
   >(null);
@@ -40,6 +57,7 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
   useEffect(() => {
     if (!isOpen) {
       setFile(null);
+      setPlaylistUrlOrId('');
       setLabelSearch('');
       setSelectedLabelIds(new Set());
       setLoading(false);
@@ -82,22 +100,55 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
     });
   };
 
-  const normalize = (value: unknown): string => {
-    if (typeof value !== 'string') return '';
-    return value
-      .toLowerCase()
-      .replace(/\(.*?\)/g, ' ')
-      .replace(/\[.*?\]/g, ' ')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim()
-      .replace(/\s+/g, ' ');
-  };
+  const handleImportPlaylist = async () => {
+    if (!activeLibraryId) {
+      window.alert('No active library selected.');
+      return;
+    }
 
-  const makeNormKey = (title: unknown, artist: unknown): string => {
-    const t = normalize(title);
-    const a = normalize(artist);
-    if (!t || !a) return '';
-    return `${t}::${a}`;
+    if (!playlistUrlOrId.trim()) {
+      window.alert('Please paste a Spotify playlist URL or ID.');
+      return;
+    }
+
+    setLoading(true);
+    setProgress(null);
+    setReport(null);
+
+    try {
+      const applyLabelIds = Array.from(selectedLabelIds);
+
+      const bulkResult = await providerApi.importPublicSpotifyPlaylistToLibrary({
+        libraryId: activeLibraryId,
+        playlistUrlOrId: playlistUrlOrId.trim(),
+        applyLabelIds,
+      });
+
+      setProgress({ processed: bulkResult.summary.total, total: bulkResult.summary.total });
+      setReport({
+        summary: bulkResult.summary,
+        results: bulkResult.results,
+      });
+
+      const data = await libraryApi.bootstrapLibrary(activeLibraryId);
+      setLibraryData(data.library);
+      setSongs(data.songs ?? []);
+      setSongSources(data.songSources ?? []);
+      setLabels(data.labels ?? [], data.superLabels ?? []);
+      setSongLabels(data.songLabels ?? []);
+      setModes(data.labelModes ?? []);
+
+      const hadProblems = bulkResult.results.some((r) => r.status !== 'imported' && r.status !== 'duplicate');
+      if (!hadProblems) {
+        window.alert('All songs imported successfully.');
+        onClose();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to import playlist.';
+      window.alert(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleImport = async () => {
@@ -119,9 +170,25 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
       const text = await file.text();
       let parsed: unknown;
       try {
-        parsed = JSON.parse(text);
-      } catch {
-        window.alert('Invalid JSON file.');
+        const cleaned = text.replace(/^\uFEFF/, '').trim();
+        if (!cleaned) {
+          window.alert('Invalid JSON file. File is empty.');
+          return;
+        }
+        parsed = JSON.parse(cleaned);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to parse JSON.';
+        const cleaned = text.replace(/^\uFEFF/, '').trim();
+        const hints = [] as string[];
+        if (/\bNaN\b/.test(cleaned)) {
+          hints.push('Replace NaN with null (JSON does not support NaN).');
+        }
+        if (/,\s*[\]}]/.test(cleaned)) {
+          hints.push('Remove trailing commas before ] or } (not allowed in JSON).');
+        }
+        window.alert(
+          `Invalid JSON file. ${message}${hints.length > 0 ? `\n\nFix: ${hints.join(' ')}` : ''}`
+        );
         return;
       }
 
@@ -134,78 +201,39 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
       const total = items.length;
       setProgress({ processed: 0, total });
 
-      const starterLabelIds = Array.from(selectedLabelIds);
+      const applyLabelIds = Array.from(selectedLabelIds);
 
-      let imported = 0;
-      let duplicates = 0;
-      const missed: Array<{ title: unknown; artist: unknown; reason: string }> = [];
+      const normalizedItems = items.map((row) => {
+        const obj = row && typeof row === 'object' ? (row as Record<string, unknown>) : {};
+        const title = typeof obj.title === 'string' ? obj.title : null;
+        const artist = typeof obj.artist === 'string' ? obj.artist : null;
+        const spotifyTrackId =
+          typeof obj.spotifyTrackId === 'string'
+            ? obj.spotifyTrackId
+            : typeof obj.providerTrackId === 'string'
+              ? obj.providerTrackId
+              : null;
+        const appleMusicSongId = typeof obj.appleMusicSongId === 'string' ? obj.appleMusicSongId : null;
+        return {
+          title,
+          artist,
+          spotifyTrackId,
+          appleMusicSongId,
+        };
+      });
 
-      for (let index = 0; index < items.length; index += 1) {
-        const input = items[index] as Record<string, unknown> | null;
-        const title = input && typeof input === 'object' ? input.title : undefined;
-        const artist = input && typeof input === 'object' ? input.artist : undefined;
-        const providerTrackId = input && typeof input === 'object' ? input.providerTrackId : undefined;
+      const bulkResult = await providerApi.bulkImportProviderSongs({
+        libraryId: activeLibraryId,
+        providerType: 'SPOTIFY',
+        items: normalizedItems,
+        applyLabelIds,
+      });
 
-        try {
-          const normKey = makeNormKey(title, artist);
-
-          if (typeof providerTrackId === 'string' && providerTrackId.trim().length > 0) {
-            const result = await providerApi.importProviderTrackToLibrary({
-              libraryId: activeLibraryId,
-              providerType: 'SPOTIFY',
-              providerTrackId: providerTrackId.trim(),
-              starterLabelIds,
-            });
-
-            if (result.created) {
-              imported += 1;
-            } else {
-              duplicates += 1;
-            }
-          } else {
-            if (!normKey) {
-              missed.push({ title, artist, reason: 'Missing required title and/or artist' });
-            } else {
-              const query = `${typeof title === 'string' ? title : ''} ${typeof artist === 'string' ? artist : ''}`.trim();
-              const search = await providerApi.searchProviders({
-                providerType: 'SPOTIFY',
-                query,
-              });
-
-              const results = Array.isArray(search?.results) ? search.results : [];
-              const match = results.find((r) => makeNormKey(r.title, r.artist) === normKey);
-
-              if (!match) {
-                missed.push({ title, artist, reason: 'No Spotify match found' });
-              } else {
-                const result = await providerApi.importProviderTrackToLibrary({
-                  libraryId: activeLibraryId,
-                  providerType: 'SPOTIFY',
-                  providerTrackId: match.providerTrackId,
-                  starterLabelIds,
-                });
-
-                if (result.created) {
-                  imported += 1;
-                } else {
-                  duplicates += 1;
-                }
-              }
-            }
-          }
-        } catch (error) {
-          const reason = error instanceof Error ? error.message : 'Unknown error';
-          missed.push({ title, artist, reason });
-        } finally {
-          setProgress({ processed: index + 1, total });
-        }
-      }
+      setProgress({ processed: total, total });
 
       setReport({
-        total,
-        imported,
-        duplicates,
-        missed,
+        summary: bulkResult.summary,
+        results: bulkResult.results,
       });
 
       const data = await libraryApi.bootstrapLibrary(activeLibraryId);
@@ -216,7 +244,8 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
       setSongLabels(data.songLabels ?? []);
       setModes(data.labelModes ?? []);
 
-      if (missed.length === 0) {
+      const hadProblems = bulkResult.results.some((r) => r.status !== 'imported' && r.status !== 'duplicate');
+      if (!hadProblems) {
         window.alert('All songs imported successfully.');
         onClose();
       }
@@ -270,19 +299,28 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
           <div className="mt-4 rounded-af-md border border-neutral-750 bg-neutral-900/40 p-3">
             <div className="text-sm font-semibold text-neutral-200">Import Report</div>
             <div className="mt-2 text-xs text-neutral-500 space-y-1">
-              <div>Total: {report.total}</div>
-              <div>Imported: {report.imported}</div>
-              <div>Duplicates: {report.duplicates}</div>
-              <div>Missed/Errors: {report.missed.length}</div>
+              <div>Total: {report.summary.total}</div>
+              <div>Imported: {report.summary.imported}</div>
+              <div>Duplicates: {report.summary.duplicates}</div>
+              <div>Exact Matches: {report.summary.exactMatches}</div>
+              <div>Fuzzy Matches: {report.summary.fuzzyMatches}</div>
+              <div>Misses: {report.summary.misses}</div>
+              <div>Missing Fields: {report.summary.missingFields}</div>
+              <div>Errors: {report.summary.errors}</div>
             </div>
-            {report.missed.length > 0 ? (
+            {report.results.some((r) => r.status !== 'imported' && r.status !== 'duplicate') ? (
               <div className="mt-3 max-h-40 overflow-y-auto rounded-af-md border border-neutral-750 bg-neutral-950/30 p-2">
-                <div className="text-xs font-semibold text-neutral-300">Missed</div>
+                <div className="text-xs font-semibold text-neutral-300">Details</div>
                 <div className="mt-2 space-y-1">
-                  {report.missed.slice(0, 200).map((m, idx) => (
+                  {report.results
+                    .filter((r) => r.status !== 'imported' && r.status !== 'duplicate')
+                    .slice(0, 200)
+                    .map((m, idx) => (
                     <div key={idx} className="text-xs text-neutral-500">
-                      {typeof m.title === 'string' ? m.title : String(m.title ?? '')} —{' '}
-                      {typeof m.artist === 'string' ? m.artist : String(m.artist ?? '')}: {m.reason}
+                      {typeof m.input?.title === 'string' ? m.input.title : String(m.input?.title ?? '')} —{' '}
+                      {typeof m.input?.artist === 'string' ? m.input.artist : String(m.input?.artist ?? '')}:
+                      {' '}
+                      {m.status}
                     </div>
                   ))}
                 </div>
@@ -290,6 +328,28 @@ export function BulkSongImportModal({ isOpen, onClose }: Props) {
             ) : null}
           </div>
         ) : null}
+
+        <div className="mt-4 space-y-2">
+          <div className="text-sm font-semibold text-neutral-200">Import Public Spotify Playlist</div>
+          <input
+            value={playlistUrlOrId}
+            onChange={(e) => setPlaylistUrlOrId(e.target.value)}
+            placeholder="Paste Spotify playlist URL or ID…"
+            className="w-full h-9 px-3 text-sm bg-neutral-800 text-neutral-100 border border-neutral-750 rounded-af-md placeholder:text-neutral-500 focus:ring-1 focus:ring-neutral-400 focus:border-neutral-500 focus:outline-none"
+            disabled={loading}
+          />
+          <button
+            type="button"
+            onClick={() => void handleImportPlaylist()}
+            disabled={loading || !playlistUrlOrId.trim()}
+            className="w-full px-3 py-2 text-sm rounded-af-md border border-neutral-600 bg-neutral-700 text-neutral-100 hover:bg-neutral-600 disabled:opacity-40"
+          >
+            {loading ? 'Importing…' : 'Import Playlist'}
+          </button>
+          <div className="text-xs text-neutral-500">
+            Playlist must be public to import without Spotify OAuth.
+          </div>
+        </div>
 
         <div className="mt-4 space-y-2">
           <input

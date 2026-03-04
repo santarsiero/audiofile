@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { apiClient } from '@/services/api';
+import { apiClient, isApiClientError } from '@/services/api';
 import { setAccessToken, setRefreshToken } from '@/services/authTokens';
 
 type RegisterResponse = {
@@ -21,24 +21,27 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!error) {
+    if (!error && !success) {
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
       setError(null);
+      setSuccess(null);
     }, 5000);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [error]);
+  }, [error, success]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setSuccess(null);
 
     if (!email.trim() || !password) {
       setError('Email and password are required.');
@@ -54,12 +57,19 @@ export function Register() {
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
       setAuthenticated(true);
-      navigate('/library', { replace: true });
+      setSuccess('Account created. Signing you in…');
+      window.setTimeout(() => {
+        navigate('/library', { replace: true });
+      }, 350);
     } catch (err) {
       setAccessToken(null);
       setRefreshToken(null);
       setAuthenticated(false);
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      if (isApiClientError(err) && err.status === 409) {
+        setError('Email already exists. Try logging in instead.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Registration failed');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -107,6 +117,11 @@ export function Register() {
           >
             Already have an account? Log in
           </button>
+          {success && (
+            <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+              {success}
+            </div>
+          )}
           {error && (
             <div className="rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">
               {error}

@@ -56,9 +56,25 @@ export function BulkLabelImportModal({ isOpen, onClose }: Props) {
       const text = await file.text();
       let parsed: unknown;
       try {
-        parsed = JSON.parse(text);
-      } catch {
-        window.alert('Invalid JSON file.');
+        const cleaned = text.replace(/^\uFEFF/, '').trim();
+        if (!cleaned) {
+          window.alert('Invalid JSON file. File is empty.');
+          return;
+        }
+        parsed = JSON.parse(cleaned);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to parse JSON.';
+        const cleaned = text.replace(/^\uFEFF/, '').trim();
+        const hints = [] as string[];
+        if (/\bNaN\b/.test(cleaned)) {
+          hints.push('Replace NaN with null (JSON does not support NaN).');
+        }
+        if (/,\s*[\]}]/.test(cleaned)) {
+          hints.push('Remove trailing commas before ] or } (not allowed in JSON).');
+        }
+        window.alert(
+          `Invalid JSON file. ${message}${hints.length > 0 ? `\n\nFix: ${hints.join(' ')}` : ''}`
+        );
         return;
       }
 
