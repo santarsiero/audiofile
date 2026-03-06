@@ -6,6 +6,7 @@ import { providerApi } from '@/services/providerApi';
 import * as libraryApi from '@/services/libraryApi';
 import type { SongId, LabelId } from '@/types/entities';
 import { BulkSongImportModal } from '@/components/modals/BulkSongImportModal';
+import { getLabelTintStyle } from '@/styles/labelCategoryTint';
 
 export function LeftPanel() {
   const contentType = useStore((state) => state.left.contentType);
@@ -245,6 +246,7 @@ function SongInfo() {
             <span
               key={labelId}
               className="px-2 py-0.5 text-af-xs bg-neutral-750 text-neutral-200 rounded-af-pill border border-neutral-700"
+              style={getLabelTintStyle(labelsById[labelId as LabelId])}
             >
               {labelsById[labelId as LabelId]?.name ?? labelId}
             </span>

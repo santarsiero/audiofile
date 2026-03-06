@@ -10,19 +10,118 @@
  * Panel content is determined by state (panelsSlice).
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useStore } from '@/store';
 import { labelApi } from '@/services/labelApi';
 import * as libraryApi from '@/services/libraryApi';
 import type { LabelId } from '@/types/entities';
 import { BulkLabelImportModal } from '@/components/modals/BulkLabelImportModal';
+import { getLabelTintStyle } from '@/styles/labelCategoryTint';
 
 export function RightPanel() {
   const contentType = useStore((state) => state.right.contentType);
   const closePanel = useStore((state) => state.closePanel);
 
+  const isLabelList = contentType === 'label-list' || contentType === null;
+
+  const GAP_PX = 8;
+  const CONTENT_PADDING_PX = 32;
+  const MIN_COL_PX = 140;
+  const MAX_COLS = 6;
+
+  const widthForColumns = (cols: number) =>
+    cols * MIN_COL_PX + Math.max(0, cols - 1) * GAP_PX + CONTENT_PADDING_PX;
+
+  const clampCols = (cols: number) => Math.max(1, Math.min(MAX_COLS, cols));
+
+  const maxViewportWidth = () => Math.floor(window.innerWidth * (2 / 3));
+
+  const snapWidth = (rawPanelWidth: number) => {
+    const contentWidth = Math.max(0, rawPanelWidth - CONTENT_PADDING_PX);
+    const perCol = MIN_COL_PX + GAP_PX;
+    const approxCols = Math.max(1, Math.round((contentWidth + GAP_PX) / perCol));
+    const cols = clampCols(approxCols);
+    return {
+      cols,
+      width: Math.min(maxViewportWidth(), widthForColumns(cols)),
+    };
+  };
+
+  const [panelWidth, setPanelWidth] = useState<number>(() => {
+    const raw = window.localStorage.getItem('audiofile:rightPanelWidth');
+    const parsed = raw ? Number(raw) : NaN;
+    const initial = Number.isFinite(parsed) ? parsed : widthForColumns(2);
+    return Math.min(maxViewportWidth(), initial);
+  });
+
+  const renderedWidth = isLabelList ? panelWidth : widthForColumns(2);
+
+  const snapped = snapWidth(panelWidth);
+
+  useEffect(() => {
+    window.localStorage.setItem('audiofile:rightPanelWidth', String(panelWidth));
+  }, [panelWidth]);
+
+  useEffect(() => {
+    if (!isLabelList) return;
+    const next = snapWidth(panelWidth);
+    if (next.width !== panelWidth) {
+      setPanelWidth(next.width);
+    }
+  }, [isLabelList, panelWidth]);
+
+  const handleResizeMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!isLabelList) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const startX = event.clientX;
+    const startWidth = panelWidth;
+
+    const minOpenWidth = widthForColumns(1);
+    const maxWidth = maxViewportWidth();
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const delta = startX - moveEvent.clientX;
+
+      const rawNext = Math.min(maxWidth, startWidth + delta);
+      if (rawNext < minOpenWidth) {
+        window.localStorage.setItem('audiofile:rightPanelWidth', String(widthForColumns(2)));
+        closePanel('right');
+        handleMouseUp();
+        return;
+      }
+
+      const next = snapWidth(rawNext);
+      setPanelWidth(next.width);
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
   return (
-    <aside className="w-80 h-full min-h-0 flex flex-col bg-surface-panel border-l border-neutral-750">
+    <aside
+      className="h-full min-h-0 flex flex-col bg-surface-panel border-l border-neutral-750 relative"
+      style={{ width: renderedWidth }}
+    >
+      {isLabelList ? (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize labels panel"
+          onMouseDown={handleResizeMouseDown}
+          className="absolute left-0 top-0 h-full w-2 cursor-col-resize group"
+        >
+          <div className="h-full w-px mx-auto bg-transparent group-hover:bg-neutral-700/80 transition-colors duration-af-fast" />
+        </div>
+      ) : null}
       {/* Panel header */}
       <div className="h-12 flex items-center justify-between px-4 border-b border-neutral-750 bg-surface-panel">
         <h2 className="text-sm font-semibold text-neutral-200">
@@ -40,7 +139,7 @@ export function RightPanel() {
 
       {/* Panel content */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
-        <PanelContent contentType={contentType} />
+        <PanelContent contentType={contentType} labelColumns={snapped.cols} />
       </div>
     </aside>
   );
@@ -63,10 +162,16 @@ function getPanelTitle(contentType: string | null): string {
   }
 }
 
-function PanelContent({ contentType }: { contentType: string | null }) {
+function PanelContent({
+  contentType,
+  labelColumns,
+}: {
+  contentType: string | null;
+  labelColumns: number;
+}) {
   switch (contentType) {
     case 'label-list':
-      return <LabelList />;
+      return <LabelList labelColumns={labelColumns} />;
     case 'label-info':
       return <LabelInfo />;
     case 'superlabel-info':
@@ -76,13 +181,13 @@ function PanelContent({ contentType }: { contentType: string | null }) {
     case 'add-superlabel':
       return <AddSuperLabelPlaceholder />;
     default:
-      return <LabelList />;
+      return <LabelList labelColumns={labelColumns} />;
   }
 }
 
 // Placeholder components - will be replaced with real implementations
 
-function LabelList() {
+function LabelList({ labelColumns }: { labelColumns: number }) {
   const labelIds = useStore((state) => state.labelIds);
   const labelsById = useStore((state) => state.labelsById);
   const openPanel = useStore((state) => state.openPanel);
@@ -137,17 +242,21 @@ function LabelList() {
           <p className="text-af-small">No matches found</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${labelColumns}, minmax(0, 1fr))` }}
+        >
           {sortedLabels.map((label) => (
             <div
               key={label.labelId}
               draggable
               onDragStart={(event) => handleDragStart(event, label.labelId)}
               onClick={() => openPanel('right', 'label-info', label.labelId)}
-              className="cursor-pointer rounded-af-md border border-neutral-750 bg-surface-element px-3 py-2.5 hover:bg-neutral-800 transition-colors duration-af-fast"
+              className="cursor-pointer rounded-af-md border border-neutral-750 bg-surface-element px-2.5 py-2 hover:bg-neutral-800 transition-colors duration-af-fast"
               title={label.name}
+              style={getLabelTintStyle(label)}
             >
-              <div className="text-af-body font-medium text-neutral-100 truncate">
+              <div className="font-medium text-neutral-100 truncate text-[clamp(11px,1.05vw,14px)]">
                 {label.name}
               </div>
             </div>
@@ -304,6 +413,7 @@ function LabelInfo() {
             onDragStart={handleNamePillDragStart}
             className="inline-flex items-center px-3 py-1 text-af-xs rounded-af-pill bg-neutral-750 text-neutral-200 border border-neutral-700 cursor-grab active:cursor-grabbing"
             title="Drag to canvas"
+            style={getLabelTintStyle(label)}
           >
             {label.name}
           </span>

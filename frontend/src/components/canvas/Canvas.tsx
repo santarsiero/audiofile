@@ -37,6 +37,7 @@ import type {
 } from '@/types/canvas';
 import { SongCard } from './SongCard';
 import { FloatingControls } from './FloatingControls';
+import { getLabelTintStyle } from '@/styles/labelCategoryTint';
 
 const SHOW_CANVAS_EMPTY_STATE = false;
 const COPY_OFFSET = 24;
@@ -815,6 +816,7 @@ function LabelCanvasVisual({ item }: { item: LabelCanvasInstance }) {
     <div
       className={`label-pill ${item.type === 'superlabel' ? 'super' : ''} ${item.isSelected ? 'selected' : ''}`}
       title={labelName}
+      style={getLabelTintStyle(item.entity)}
     >
       <span className="text-sm font-medium truncate max-w-[180px]">{labelName}</span>
     </div>

@@ -16,6 +16,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '@/store';
 import { clearTokens } from '@/services/authTokens';
 import type { LabelId } from '@/types/entities';
+import { getLabelTintStyle } from '@/styles/labelCategoryTint';
 
 export function Header() {
   const theme = useStore((state) => state.theme);
@@ -394,6 +395,7 @@ function ActiveLabelsRow() {
           <span
             key={labelId}
             className="inline-flex items-center gap-1 px-2.5 py-0.5 text-sm bg-neutral-750 text-neutral-100 rounded-af-pill whitespace-nowrap flex-shrink-0 border border-neutral-700"
+            style={getLabelTintStyle(label)}
           >
             {label?.name || labelId}
             <button
